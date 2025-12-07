@@ -4,10 +4,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://ideal-winner-5w66vv46wp534jw7-5100.app.github.dev;">
     <title>GrowDate</title>
     <base href="/" />
     <link href="css/app.css" rel="stylesheet" />
-    <link href="GrowDate.Frontend.styles.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -25,11 +25,30 @@
     </div>
     
     <!-- Three.js for 3D globe -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js" crossorigin="anonymous"></script>
+    
+    <script>
+        console.log('=== Script Loading Debug ===');
+        window.addEventListener('load', function() {
+            console.log('Window loaded');
+            console.log('THREE available:', typeof THREE !== 'undefined');
+            console.log('THREE.OrbitControls available:', typeof THREE !== 'undefined' && typeof THREE.OrbitControls !== 'undefined');
+            
+            // Check for globe container after a delay
+            setTimeout(function() {
+                var container = document.getElementById('globe-container');
+                console.log('Globe container found:', !!container);
+                if (container) {
+                    console.log('Container dimensions:', container.clientWidth, 'x', container.clientHeight);
+                }
+            }, 2000);
+        });
+    </script>
     
     <script src="js/map.js"></script>
     <script src="js/globe.js"></script>
+    <script src="js/globe-debug.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
 

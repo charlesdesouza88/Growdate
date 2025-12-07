@@ -8,9 +8,19 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // Configure HttpClient for API calls
-builder.Services.AddScoped(sp => new HttpClient 
-{ 
-    BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7000") 
+builder.Services.AddScoped(sp =>
+{
+    var httpClient = new HttpClient();
+    var apiUrl = builder.Configuration["ApiBaseUrl"];
+    
+    // Use relative URL if not specified (same origin)
+    if (string.IsNullOrEmpty(apiUrl))
+    {
+        apiUrl = builder.HostEnvironment.BaseAddress;
+    }
+    
+    httpClient.BaseAddress = new Uri(apiUrl);
+    return httpClient;
 });
 
 // Register services

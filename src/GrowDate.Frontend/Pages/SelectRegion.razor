@@ -89,7 +89,12 @@
             try
             {
                 dotNetReference = DotNetObjectReference.Create(this);
+                
+                // Wait a bit for THREE.js to load from CDN
+                await Task.Delay(500);
+                
                 await JS.InvokeVoidAsync("initGlobe", regions, dotNetReference);
+                Console.WriteLine("Globe initialization called successfully");
             }
             catch (Exception ex)
             {

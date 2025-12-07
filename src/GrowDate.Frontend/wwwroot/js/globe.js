@@ -6,10 +6,23 @@ let selectedRegion = null;
 
 // Initialize the 3D globe
 window.initGlobe = function(regionData, onRegionClick) {
+    console.log('initGlobe called with', regionData?.length, 'regions');
+    
+    // Check if THREE.js is loaded
+    if (typeof THREE === 'undefined') {
+        console.error('THREE.js is not loaded!');
+        return;
+    }
+    
     regions = regionData;
     
     const container = document.getElementById('globe-container');
-    if (!container) return;
+    if (!container) {
+        console.error('globe-container element not found!');
+        return;
+    }
+    
+    console.log('Container found, creating globe...');
     
     // Scene setup
     scene = new THREE.Scene();

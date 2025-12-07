@@ -15,11 +15,15 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
-        builder =>
+        policy =>
         {
-            builder.AllowAnyOrigin()
-                   .AllowAnyMethod()
-                   .AllowAnyHeader();
+            policy.WithOrigins(
+                "http://localhost:5101",
+                "https://localhost:5101",
+                "https://ideal-winner-5w66vv46wp534jw7-5101.app.github.dev"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader();
         });
 });
 
