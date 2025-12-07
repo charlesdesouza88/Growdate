@@ -1,14 +1,17 @@
 @page "/select-region"
 @using GrowDate.Frontend.Services
 @using GrowDate.Core.Entities
+@using Microsoft.JSInterop
 @inject ApiService ApiService
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
+@implements IAsyncDisposable
 
 <PageTitle>Select Region</PageTitle>
 
 <div class="region-selector">
-    <h1>🗺️ Select Your Region</h1>
-    <p>Choose your location to get personalized planting recommendations</p>
+    <h1>🌍 Select Your Region</h1>
+    <p>Choose your location on the interactive 3D globe or from the list below</p>
 
     @if (loading)
     {
@@ -23,8 +26,11 @@
     }
     else
     {
-        <div class="map-container">
-            <canvas id="regionMap" class="map-canvas"></canvas>
+        <div class="globe-wrapper">
+            <div id="globe-container" class="globe-container"></div>
+            <div class="globe-info">
+                <p>🖱️ Click and drag to rotate • Scroll to zoom • Click markers to select</p>
+            </div>
         </div>
 
         <div class="region-grid">
@@ -58,6 +64,7 @@
     private List<Region> regions = new();
     private Region? selectedRegion;
     private bool loading = true;
+    private DotNetObjectReference<SelectRegion>? dotNetReference;
 
     protected override async Task OnInitializedAsync()
     {
@@ -79,8 +86,26 @@
     {
         if (firstRender && regions.Any())
         {
-            // In a real implementation, initialize 3D map here using Three.js or similar
-            // For this prototype, we're using a simple 2D grid selection
+            try
+            {
+                dotNetReference = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("initGlobe", regions, dotNetReference);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing 3D globe: {ex.Message}");
+            }
+        }
+    }
+
+    [JSInvokable]
+    public void OnRegionSelected(int regionId)
+    {
+        var region = regions.FirstOrDefault(r => r.Id == regionId);
+        if (region != null)
+        {
+            OnSelectRegion(region);
+            StateHasChanged();
         }
     }
 
@@ -103,6 +128,19 @@
         if (selectedRegion != null)
         {
             Navigation.NavigateTo("/recommendations");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("disposeGlobe");
+            dotNetReference?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error disposing globe: {ex.Message}");
         }
     }
 }
