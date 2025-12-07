@@ -1,0 +1,132 @@
+@page "/recommendations"
+@using GrowDate.Frontend.Services
+@using GrowDate.Core.Entities
+@inject ApiService ApiService
+
+<PageTitle>Crop Recommendations</PageTitle>
+
+<div class="recommendations-container">
+    <h1>🌾 Crop Recommendations</h1>
+
+    @if (selectedRegion == null)
+    {
+        <div class="alert">
+            <p>⚠️ Please <a href="select-region">select a region</a> first to see recommendations.</p>
+        </div>
+    }
+    else
+    {
+        <div class="filter-section">
+            <div>
+                <label>Region: <strong>@selectedRegion.Name</strong></label>
+                <a href="select-region" class="btn">Change Region</a>
+            </div>
+            <div>
+                <label for="dateSelect">Select Date:</label>
+                <input id="dateSelect" type="date" @bind="selectedDate" @bind:event="oninput" @onchange="LoadRecommendations" />
+            </div>
+        </div>
+
+        @if (loading)
+        {
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading recommendations...</p>
+            </div>
+        }
+        else if (!recommendations.Any())
+        {
+            <p>No recommendations available for this date and region.</p>
+        }
+        else
+        {
+            <div class="summary">
+                <h2>Recommendations for @selectedDate.ToString("MMMM dd, yyyy")</h2>
+                <p>Found @recommendations.Count crops suitable for your region</p>
+            </div>
+
+            <div class="recommendation-list">
+                @foreach (var rec in recommendations.OrderByDescending(r => r.IsIdealTime))
+                {
+                    <div class="recommendation-card @rec.Status.ToLower().Replace(" ", "-")">
+                        <div class="crop-header">
+                            <span class="crop-name">@rec.Crop.Name</span>
+                            <span class="status-badge @rec.Status.ToLower().Replace(" ", "-")">@rec.Status</span>
+                        </div>
+                        
+                        <div class="crop-category">
+                            <span>Category: @rec.Crop.Category</span>
+                        </div>
+
+                        <div class="crop-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Planting Window</span>
+                                <span class="detail-value">
+                                    @rec.PlantingWindowStart.ToString("MMM dd") - @rec.PlantingWindowEnd.ToString("MMM dd")
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Germination Date</span>
+                                <span class="detail-value">@rec.EstimatedGerminationDate.ToString("MMM dd, yyyy")</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Harvest Date</span>
+                                <span class="detail-value">@rec.EstimatedHarvestDate.ToString("MMM dd, yyyy")</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Days to Germination</span>
+                                <span class="detail-value">@rec.Crop.DaysToGermination days</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Days to Harvest</span>
+                                <span class="detail-value">@rec.Crop.DaysToHarvest days</span>
+                            </div>
+                        </div>
+
+                        <div class="notes">
+                            <p>@rec.Notes</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private Region? selectedRegion;
+    private DateTime selectedDate = DateTime.Now;
+    private List<PlantingRecommendation> recommendations = new();
+    private bool loading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // In a real app, get region from state management or local storage
+        var regions = await ApiService.GetRegionsAsync();
+        if (regions.Any())
+        {
+            selectedRegion = regions.First(); // Default to first region for demo
+            await LoadRecommendations();
+        }
+    }
+
+    private async Task LoadRecommendations()
+    {
+        if (selectedRegion == null) return;
+
+        loading = true;
+        try
+        {
+            recommendations = await ApiService.GetRecommendationsAsync(selectedRegion.Id, selectedDate);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading recommendations: {ex.Message}");
+            recommendations.Clear();
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}
