@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/GrowDate.Api/Dockerfile
+    ports:
+      - "5100:5100"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5100
+    networks:
+      - growdate-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: src/GrowDate.Frontend/Dockerfile
+    ports:
+      - "5101:80"
+    depends_on:
+      - api
+    networks:
+      - growdate-network
+    restart: unless-stopped
+
+networks:
+  growdate-network:
+    driver: bridge
