@@ -17,9 +17,11 @@
     </PackageReference>
     <PackageReference Include="Moq" Version="4.20.70" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\GrowDate.Api\GrowDate.Api.csproj" />
     <ProjectReference Include="..\GrowDate.Core\GrowDate.Core.csproj" />
     <ProjectReference Include="..\GrowDate.Infrastructure\GrowDate.Infrastructure.csproj" />
   </ItemGroup>
