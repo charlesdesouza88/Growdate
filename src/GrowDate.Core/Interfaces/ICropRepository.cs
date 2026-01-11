@@ -7,11 +7,11 @@ namespace GrowDate.Core.Interfaces;
 /// </summary>
 public interface ICropRepository
 {
-    Task<IEnumerable<Crop>> GetAllAsync();
-    Task<Crop?> GetByIdAsync(int id);
-    Task<IEnumerable<Crop>> GetByCategoryAsync(string category);
-    Task<IEnumerable<Crop>> GetBySuitableZoneAsync(string zone);
-    Task<Crop> AddAsync(Crop crop);
-    Task UpdateAsync(Crop crop);
-    Task DeleteAsync(int id);
+    Task<IEnumerable<Crop>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<Crop?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Crop>> GetByCategoryAsync(string category, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Crop>> GetBySuitableZoneAsync(string zone, CancellationToken cancellationToken = default);
+    Task<Crop> AddAsync(Crop crop, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Crop crop, CancellationToken cancellationToken = default);
+    Task DeleteAsync(int id, CancellationToken cancellationToken = default);
 }

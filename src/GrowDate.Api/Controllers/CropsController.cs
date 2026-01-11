@@ -1,3 +1,4 @@
+using GrowDate.Core.DTOs;
 using GrowDate.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,31 +18,40 @@ public class CropsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var crops = await _cropRepository.GetAllAsync();
-        return Ok(crops);
+        var crops = await _cropRepository.GetAllAsync(HttpContext.RequestAborted);
+        return Ok(crops.Select(c => c.ToDto()));
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var crop = await _cropRepository.GetByIdAsync(id);
+        if (id <= 0)
+            return BadRequest("id must be positive.");
+
+        var crop = await _cropRepository.GetByIdAsync(id, HttpContext.RequestAborted);
         if (crop == null)
             return NotFound();
 
-        return Ok(crop);
+        return Ok(crop.ToDto());
     }
 
     [HttpGet("by-zone/{zone}")]
     public async Task<IActionResult> GetByZone(string zone)
     {
-        var crops = await _cropRepository.GetBySuitableZoneAsync(zone);
-        return Ok(crops);
+        if (string.IsNullOrWhiteSpace(zone))
+            return BadRequest("zone must be provided.");
+
+        var crops = await _cropRepository.GetBySuitableZoneAsync(zone, HttpContext.RequestAborted);
+        return Ok(crops.Select(c => c.ToDto()));
     }
 
     [HttpGet("by-category/{category}")]
     public async Task<IActionResult> GetByCategory(string category)
     {
-        var crops = await _cropRepository.GetByCategoryAsync(category);
-        return Ok(crops);
+        if (string.IsNullOrWhiteSpace(category))
+            return BadRequest("category must be provided.");
+
+        var crops = await _cropRepository.GetByCategoryAsync(category, HttpContext.RequestAborted);
+        return Ok(crops.Select(c => c.ToDto()));
     }
 }

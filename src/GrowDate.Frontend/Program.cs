@@ -25,5 +25,6 @@ builder.Services.AddScoped(sp =>
 
 // Register services
 builder.Services.AddScoped<ApiService>();
+builder.Services.AddScoped<RegionStateService>();
 
 await builder.Build().RunAsync();

@@ -59,7 +59,17 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<GrowDateDbContext>();
-    context.Database.EnsureCreated();
+    // Apply migrations when available; fall back to EnsureCreated for first-time setups
+    var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+    if (pendingMigrations.Any())
+    {
+        await context.Database.MigrateAsync();
+    }
+    else
+    {
+        context.Database.EnsureCreated();
+    }
+
     await DatabaseSeeder.SeedAsync(context);
 }
 

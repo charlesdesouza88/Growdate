@@ -1,3 +1,4 @@
+using GrowDate.Core.DTOs;
 using GrowDate.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,31 +18,40 @@ public class RegionsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var regions = await _regionRepository.GetAllAsync();
-        return Ok(regions);
+        var regions = await _regionRepository.GetAllAsync(HttpContext.RequestAborted);
+        return Ok(regions.Select(r => r.ToDto()));
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var region = await _regionRepository.GetByIdAsync(id);
+        if (id <= 0)
+            return BadRequest("id must be positive.");
+
+        var region = await _regionRepository.GetByIdAsync(id, HttpContext.RequestAborted);
         if (region == null)
             return NotFound();
 
-        return Ok(region);
+        return Ok(region.ToDto());
     }
 
     [HttpGet("by-country/{country}")]
     public async Task<IActionResult> GetByCountry(string country)
     {
-        var regions = await _regionRepository.GetByCountryAsync(country);
-        return Ok(regions);
+        if (string.IsNullOrWhiteSpace(country))
+            return BadRequest("country must be provided.");
+
+        var regions = await _regionRepository.GetByCountryAsync(country, HttpContext.RequestAborted);
+        return Ok(regions.Select(r => r.ToDto()));
     }
 
     [HttpGet("by-zone/{zone}")]
     public async Task<IActionResult> GetByClimateZone(string zone)
     {
-        var regions = await _regionRepository.GetByClimateZoneAsync(zone);
-        return Ok(regions);
+        if (string.IsNullOrWhiteSpace(zone))
+            return BadRequest("zone must be provided.");
+
+        var regions = await _regionRepository.GetByClimateZoneAsync(zone, HttpContext.RequestAborted);
+        return Ok(regions.Select(r => r.ToDto()));
     }
 }

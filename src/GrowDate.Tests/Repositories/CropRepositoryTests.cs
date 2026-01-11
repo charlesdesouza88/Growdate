@@ -113,4 +113,26 @@ public class CropRepositoryTests
         // Assert
         Assert.Equal(2, result.Count());
     }
+
+    [Fact]
+    public async Task GetBySuitableZoneAsync_MatchesWholeToken_CaseInsensitive()
+    {
+        using var context = CreateInMemoryContext();
+        var repository = new CropRepository(context);
+
+        var crops = new List<Crop>
+        {
+            new Crop { Name = "Zone10Match", SuitableZones = new List<string> { "Zone 10" } },
+            new Crop { Name = "Zone1Only", SuitableZones = new List<string> { "Zone 1" } },
+            new Crop { Name = "LowerCase", SuitableZones = new List<string> { "zone 10" } }
+        };
+
+        context.Crops.AddRange(crops);
+        await context.SaveChangesAsync();
+
+        var result = await repository.GetBySuitableZoneAsync("ZONE 10");
+
+        Assert.Equal(2, result.Count());
+        Assert.All(result, c => Assert.DoesNotContain("Zone 1", c.SuitableZones));
+    }
 }

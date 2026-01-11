@@ -14,56 +14,59 @@ public class RegionRepository : IRegionRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<Region>> GetAllAsync()
+    public async Task<IEnumerable<Region>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Regions.ToListAsync();
+        return await _context.Regions.AsNoTracking().ToListAsync(cancellationToken);
     }
 
-    public async Task<Region?> GetByIdAsync(int id)
+    public async Task<Region?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.Regions.FindAsync(id);
+        return await _context.Regions.FindAsync(new object?[] { id }, cancellationToken);
     }
 
-    public async Task<Region?> GetByCodeAsync(string code)
+    public async Task<Region?> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
     {
         return await _context.Regions
-            .FirstOrDefaultAsync(r => r.Code == code);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Code == code, cancellationToken);
     }
 
-    public async Task<IEnumerable<Region>> GetByCountryAsync(string country)
+    public async Task<IEnumerable<Region>> GetByCountryAsync(string country, CancellationToken cancellationToken = default)
     {
         return await _context.Regions
+            .AsNoTracking()
             .Where(r => r.Country == country)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<Region>> GetByClimateZoneAsync(string zone)
+    public async Task<IEnumerable<Region>> GetByClimateZoneAsync(string zone, CancellationToken cancellationToken = default)
     {
         return await _context.Regions
+            .AsNoTracking()
             .Where(r => r.ClimateZone == zone)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<Region> AddAsync(Region region)
+    public async Task<Region> AddAsync(Region region, CancellationToken cancellationToken = default)
     {
         _context.Regions.Add(region);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return region;
     }
 
-    public async Task UpdateAsync(Region region)
+    public async Task UpdateAsync(Region region, CancellationToken cancellationToken = default)
     {
         _context.Entry(region).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeleteAsync(int id)
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        var region = await _context.Regions.FindAsync(id);
+        var region = await _context.Regions.FindAsync(new object?[] { id }, cancellationToken);
         if (region != null)
         {
             _context.Regions.Remove(region);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

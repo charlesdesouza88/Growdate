@@ -1,3 +1,4 @@
+using GrowDate.Core.DTOs;
 using GrowDate.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,10 +9,12 @@ namespace GrowDate.Api.Controllers;
 public class RecommendationsController : ControllerBase
 {
     private readonly IRecommendationService _recommendationService;
+    private readonly IRegionRepository _regionRepository;
 
-    public RecommendationsController(IRecommendationService recommendationService)
+    public RecommendationsController(IRecommendationService recommendationService, IRegionRepository regionRepository)
     {
         _recommendationService = recommendationService;
+        _regionRepository = regionRepository;
     }
 
     [HttpGet]
@@ -19,16 +22,30 @@ public class RecommendationsController : ControllerBase
         [FromQuery] int regionId,
         [FromQuery] DateTime? selectedDate = null)
     {
-        var date = selectedDate ?? DateTime.Now;
-        var recommendations = await _recommendationService.GetRecommendationsAsync(regionId, date);
-        return Ok(recommendations);
+        if (regionId <= 0)
+            return BadRequest("regionId must be provided.");
+
+        var region = await _regionRepository.GetByIdAsync(regionId, HttpContext.RequestAborted);
+        if (region == null)
+            return NotFound($"Region {regionId} was not found.");
+
+        var date = (selectedDate ?? DateTime.UtcNow).Date;
+        var recommendations = await _recommendationService.GetRecommendationsAsync(regionId, date, HttpContext.RequestAborted);
+        return Ok(recommendations.Select(r => r.ToDto()));
     }
 
     [HttpGet("crops")]
     public async Task<IActionResult> GetCropsForRegion([FromQuery] int regionId)
     {
-        var crops = await _recommendationService.GetCropsForRegionAsync(regionId);
-        return Ok(crops);
+        if (regionId <= 0)
+            return BadRequest("regionId must be provided.");
+
+        var region = await _regionRepository.GetByIdAsync(regionId, HttpContext.RequestAborted);
+        if (region == null)
+            return NotFound($"Region {regionId} was not found.");
+
+        var crops = await _recommendationService.GetCropsForRegionAsync(regionId, HttpContext.RequestAborted);
+        return Ok(crops.Select(c => c.ToDto()));
     }
 
     [HttpGet("date-range")]
@@ -37,8 +54,18 @@ public class RecommendationsController : ControllerBase
         [FromQuery] DateTime startDate,
         [FromQuery] DateTime endDate)
     {
-        var crops = await _recommendationService.GetCropsForDateRangeAsync(regionId, startDate, endDate);
-        return Ok(crops);
+        if (regionId <= 0)
+            return BadRequest("regionId must be provided.");
+
+        if (startDate > endDate)
+            return BadRequest("startDate must be before or equal to endDate.");
+
+        var region = await _regionRepository.GetByIdAsync(regionId, HttpContext.RequestAborted);
+        if (region == null)
+            return NotFound($"Region {regionId} was not found.");
+
+        var crops = await _recommendationService.GetCropsForDateRangeAsync(regionId, startDate, endDate, HttpContext.RequestAborted);
+        return Ok(crops.Select(c => c.ToDto()));
     }
 
     [HttpGet("detailed")]
@@ -47,12 +74,19 @@ public class RecommendationsController : ControllerBase
         [FromQuery] int regionId,
         [FromQuery] DateTime? selectedDate = null)
     {
-        var date = selectedDate ?? DateTime.Now;
-        var recommendation = await _recommendationService.GetDetailedRecommendationAsync(cropId, regionId, date);
+        if (regionId <= 0 || cropId <= 0)
+            return BadRequest("cropId and regionId must be provided.");
+
+        var region = await _regionRepository.GetByIdAsync(regionId, HttpContext.RequestAborted);
+        if (region == null)
+            return NotFound($"Region {regionId} was not found.");
+
+        var date = (selectedDate ?? DateTime.UtcNow).Date;
+        var recommendation = await _recommendationService.GetDetailedRecommendationAsync(cropId, regionId, date, HttpContext.RequestAborted);
         
         if (recommendation == null)
             return NotFound();
 
-        return Ok(recommendation);
+        return Ok(recommendation.ToDto());
     }
 }

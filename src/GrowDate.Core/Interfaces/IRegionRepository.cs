@@ -7,12 +7,12 @@ namespace GrowDate.Core.Interfaces;
 /// </summary>
 public interface IRegionRepository
 {
-    Task<IEnumerable<Region>> GetAllAsync();
-    Task<Region?> GetByIdAsync(int id);
-    Task<Region?> GetByCodeAsync(string code);
-    Task<IEnumerable<Region>> GetByCountryAsync(string country);
-    Task<IEnumerable<Region>> GetByClimateZoneAsync(string zone);
-    Task<Region> AddAsync(Region region);
-    Task UpdateAsync(Region region);
-    Task DeleteAsync(int id);
+    Task<IEnumerable<Region>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<Region?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Region?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Region>> GetByCountryAsync(string country, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Region>> GetByClimateZoneAsync(string zone, CancellationToken cancellationToken = default);
+    Task<Region> AddAsync(Region region, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Region region, CancellationToken cancellationToken = default);
+    Task DeleteAsync(int id, CancellationToken cancellationToken = default);
 }

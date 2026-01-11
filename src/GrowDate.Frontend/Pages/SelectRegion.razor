@@ -1,8 +1,9 @@
 @page "/select-region"
 @using GrowDate.Frontend.Services
-@using GrowDate.Core.Entities
+@using GrowDate.Core.DTOs
 @using Microsoft.JSInterop
 @inject ApiService ApiService
+@inject RegionStateService RegionState
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @implements IAsyncDisposable
@@ -61,8 +62,8 @@
 </div>
 
 @code {
-    private List<Region> regions = new();
-    private Region? selectedRegion;
+    private List<RegionDto> regions = new();
+    private RegionDto? selectedRegion;
     private bool loading = true;
     private DotNetObjectReference<SelectRegion>? dotNetReference;
 
@@ -114,10 +115,10 @@
         }
     }
 
-    private void OnSelectRegion(Region region)
+    private void OnSelectRegion(RegionDto region)
     {
         selectedRegion = region;
-        // In a real app, save to state management or local storage
+        RegionState.SetRegion(region);
     }
 
     private void ViewCalendar()

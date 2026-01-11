@@ -23,13 +23,11 @@ public class GrowDateDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Category).HasMaxLength(50);
-            
-            // Store SuitableZones as JSON
-            entity.Property(e => e.SuitableZones)
-                .HasConversion(
-                    v => string.Join(',', v),
-                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
-                );
+
+            entity.Property(e => e.SuitableZonesCsv)
+                .IsRequired()
+                .HasColumnName("SuitableZones")
+                .HasMaxLength(500);
         });
 
         // Configure Region entity

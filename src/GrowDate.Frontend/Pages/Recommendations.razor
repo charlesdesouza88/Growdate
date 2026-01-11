@@ -1,7 +1,8 @@
 @page "/recommendations"
 @using GrowDate.Frontend.Services
-@using GrowDate.Core.Entities
+@using GrowDate.Core.DTOs
 @inject ApiService ApiService
+@inject RegionStateService RegionState
 
 <PageTitle>Crop Recommendations</PageTitle>
 
@@ -94,18 +95,25 @@
 </div>
 
 @code {
-    private Region? selectedRegion;
+    private RegionDto? selectedRegion;
     private DateTime selectedDate = DateTime.Now;
-    private List<PlantingRecommendation> recommendations = new();
+    private List<RecommendationDto> recommendations = new();
     private bool loading = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // In a real app, get region from state management or local storage
-        var regions = await ApiService.GetRegionsAsync();
-        if (regions.Any())
+        selectedRegion = RegionState.GetRegion();
+        if (selectedRegion == null)
         {
-            selectedRegion = regions.First(); // Default to first region for demo
+            var regions = await ApiService.GetRegionsAsync();
+            if (regions.Any())
+            {
+                selectedRegion = regions.First();
+                RegionState.SetRegion(selectedRegion);
+            }
+        }
+        if (selectedRegion != null)
+        {
             await LoadRecommendations();
         }
     }

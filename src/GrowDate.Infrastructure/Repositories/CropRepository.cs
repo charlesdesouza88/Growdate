@@ -14,50 +14,61 @@ public class CropRepository : ICropRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<Crop>> GetAllAsync()
-    {
-        return await _context.Crops.ToListAsync();
-    }
-
-    public async Task<Crop?> GetByIdAsync(int id)
-    {
-        return await _context.Crops.FindAsync(id);
-    }
-
-    public async Task<IEnumerable<Crop>> GetByCategoryAsync(string category)
+    public async Task<IEnumerable<Crop>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Crops
-            .Where(c => c.Category == category)
-            .ToListAsync();
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<Crop>> GetBySuitableZoneAsync(string zone)
+    public async Task<Crop?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        // Load all crops into memory and filter in-memory since SuitableZones is stored as comma-separated string
-        var allCrops = await _context.Crops.ToListAsync();
-        return allCrops.Where(c => c.SuitableZones.Contains(zone)).ToList();
+        return await _context.Crops.FindAsync(new object?[] { id }, cancellationToken);
     }
 
-    public async Task<Crop> AddAsync(Crop crop)
+    public async Task<IEnumerable<Crop>> GetByCategoryAsync(string category, CancellationToken cancellationToken = default)
+    {
+        return await _context.Crops
+            .AsNoTracking()
+            .Where(c => c.Category == category)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<Crop>> GetBySuitableZoneAsync(string zone, CancellationToken cancellationToken = default)
+    {
+        var normalizedZone = zone?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(normalizedZone))
+            return Enumerable.Empty<Crop>();
+
+        // Match whole tokens to avoid substring collisions (e.g., "Zone 1" vs "Zone 10")
+        var pattern = $"%,{normalizedZone},%";
+
+        return await _context.Crops
+            .AsNoTracking()
+            .Where(c => EF.Functions.Like("," + c.SuitableZonesCsv.ToLower() + ",", pattern))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Crop> AddAsync(Crop crop, CancellationToken cancellationToken = default)
     {
         _context.Crops.Add(crop);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return crop;
     }
 
-    public async Task UpdateAsync(Crop crop)
+    public async Task UpdateAsync(Crop crop, CancellationToken cancellationToken = default)
     {
         _context.Entry(crop).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeleteAsync(int id)
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        var crop = await _context.Crops.FindAsync(id);
+        var crop = await _context.Crops.FindAsync(new object?[] { id }, cancellationToken);
         if (crop != null)
         {
             _context.Crops.Remove(crop);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

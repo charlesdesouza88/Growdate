@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace GrowDate.Core.Entities;
 
 /// <summary>
@@ -21,7 +23,20 @@ public class Crop
     public int DaysToHarvest { get; set; }
     
     // Climate requirements
-    public List<string> SuitableZones { get; set; } = new List<string>(); // Zone 8, Zone 9, Tropical, etc.
+    public string SuitableZonesCsv { get; set; } = string.Empty; // Stored as comma-separated values for querying
+
+    [NotMapped]
+    public List<string> SuitableZones
+    {
+        get => SuitableZonesCsv.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(z => z.Trim())
+            .Where(z => !string.IsNullOrWhiteSpace(z))
+            .ToList();
+        set => SuitableZonesCsv = value == null || value.Count == 0
+            ? string.Empty
+            : string.Join(',', value);
+    }
+
     public string ClimateZones { get; set; } = string.Empty; // Comma-separated zone IDs (legacy)
     public decimal MinTemperature { get; set; } // Celsius
     public decimal MaxTemperature { get; set; } // Celsius
