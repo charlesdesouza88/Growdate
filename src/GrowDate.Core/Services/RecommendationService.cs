@@ -59,7 +59,7 @@ public class RecommendationService : IRecommendationService
             IsPlantingSeasonOverlap(c, startDate, endDate));
     }
 
-    public async Task<PlantingRecommendation> GetDetailedRecommendationAsync(int cropId, int regionId, DateTime selectedDate, CancellationToken cancellationToken = default)
+    public async Task<PlantingRecommendation?> GetDetailedRecommendationAsync(int cropId, int regionId, DateTime selectedDate, CancellationToken cancellationToken = default)
     {
         var crop = await _cropRepository.GetByIdAsync(cropId, cancellationToken);
         var region = await _regionRepository.GetByIdAsync(regionId, cancellationToken);
