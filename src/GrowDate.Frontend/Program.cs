@@ -11,15 +11,20 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped(sp =>
 {
     var httpClient = new HttpClient();
-    var apiUrl = builder.Configuration["ApiBaseUrl"];
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var apiUrl = configuration["ApiBaseUrl"];
+    
+    Console.WriteLine($"🔧 Configuring HttpClient with API URL: {apiUrl}");
     
     // Use relative URL if not specified (same origin)
     if (string.IsNullOrEmpty(apiUrl))
     {
         apiUrl = builder.HostEnvironment.BaseAddress;
+        Console.WriteLine($"⚠️ No API URL configured, using base address: {apiUrl}");
     }
     
     httpClient.BaseAddress = new Uri(apiUrl);
+    Console.WriteLine($"✅ HttpClient configured with base address: {httpClient.BaseAddress}");
     return httpClient;
 });
 

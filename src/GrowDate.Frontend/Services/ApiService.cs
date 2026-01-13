@@ -15,7 +15,31 @@ public class ApiService
     // Regions
     public async Task<List<RegionDto>> GetRegionsAsync()
     {
-        return await _httpClient.GetFromJsonAsync<List<RegionDto>>("api/regions") ?? new List<RegionDto>();
+        try
+        {
+            Console.WriteLine($"🌐 Making API call to: {_httpClient.BaseAddress}api/regions");
+            var response = await _httpClient.GetAsync("api/regions");
+            Console.WriteLine($"📡 API Response Status: {response.StatusCode}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var regions = await response.Content.ReadFromJsonAsync<List<RegionDto>>();
+                Console.WriteLine($"✅ Successfully parsed {regions?.Count ?? 0} regions from API");
+                return regions ?? new List<RegionDto>();
+            }
+            else
+            {
+                Console.WriteLine($"❌ API call failed with status: {response.StatusCode}");
+                Console.WriteLine($"📄 Response content: {await response.Content.ReadAsStringAsync()}");
+                return new List<RegionDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Exception in GetRegionsAsync: {ex.Message}");
+            Console.WriteLine($"🔍 Exception type: {ex.GetType().Name}");
+            throw;
+        }
     }
 
     public async Task<RegionDto?> GetRegionByIdAsync(int id)
