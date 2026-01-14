@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Build and Test
 
 on:
   push:
@@ -30,10 +30,12 @@ jobs:
     - name: Run tests
       run: dotnet test GrowDate.sln --configuration Release --no-build --verbosity normal
 
-  build-docker-images:
+  # Docker build job (currently disabled - enable when Docker Hub secrets are configured)
+  # To enable: remove the "if: false" condition and configure DOCKER_USERNAME and DOCKER_PASSWORD secrets
+  docker-build:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: false # Disabled until Docker Hub credentials are configured
     
     steps:
     - uses: actions/checkout@v4
@@ -41,35 +43,10 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-    
-    - name: Build and push API image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./src/GrowDate.Api/Dockerfile
-        push: true
-        tags: |
-          ${{ secrets.DOCKER_USERNAME }}/growdate-api:latest
-          ${{ secrets.DOCKER_USERNAME }}/growdate-api:${{ github.sha }}
-        cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/growdate-api:buildcache
-        cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/growdate-api:buildcache,mode=max
-    
-    - name: Build and push Frontend image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./src/GrowDate.Frontend/Dockerfile
-        push: true
-        tags: |
-          ${{ secrets.DOCKER_USERNAME }}/growdate-frontend:latest
-          ${{ secrets.DOCKER_USERNAME }}/growdate-frontend:${{ github.sha }}
-        cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/growdate-frontend:buildcache
-        cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/growdate-frontend:buildcache,mode=max
+    - name: Build Docker images locally
+      run: |
+        docker build -f src/GrowDate.Api/Dockerfile -t growdate-api:latest .
+        docker build -f src/GrowDate.Frontend/Dockerfile -t growdate-frontend:latest .
 
   # Uncomment and configure for Azure deployment
   # deploy-to-azure:
