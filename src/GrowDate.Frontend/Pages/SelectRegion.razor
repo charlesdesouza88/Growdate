@@ -137,6 +137,9 @@
             {
                 dotNetReference = DotNetObjectReference.Create(this);
                 
+                // Make the reference available globally for JavaScript
+                await JS.InvokeVoidAsync("setBlazorReference", dotNetReference);
+                
                 // Wait a bit for the page to settle
                 await Task.Delay(500);
                 
@@ -198,17 +201,24 @@
     }
 
     [JSInvokable]
-    public async Task OnRegionSelected(string regionName)
+    public async Task OnMapRegionSelected(string regionName)
     {
         try
         {
             Console.WriteLine($"Region selected via JavaScript: {regionName}");
             
-            // Here you could navigate to a detail page or update the UI
-            // For now, just log the selection
-            
-            // Example: Navigate to recommendations page for the region
-            // NavigationManager.NavigateTo($"/recommendations/{regionName}");
+            // Find the region by name and select it
+            var region = regions.FirstOrDefault(r => r.Name.Equals(regionName, StringComparison.OrdinalIgnoreCase));
+            if (region != null)
+            {
+                OnSelectRegion(region);
+                await Task.CompletedTask; // To satisfy async requirement
+                StateHasChanged();
+            }
+            else
+            {
+                Console.WriteLine($"Warning: Region '{regionName}' not found in loaded regions");
+            }
         }
         catch (Exception ex)
         {

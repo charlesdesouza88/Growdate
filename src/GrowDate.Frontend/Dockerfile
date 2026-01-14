@@ -20,6 +20,7 @@ RUN dotnet publish "GrowDate.Frontend.csproj" -c Release -o /app/publish /p:UseA
 # Runtime stage - using nginx to serve the static files
 FROM nginx:alpine AS final
 WORKDIR /usr/share/nginx/html
+# wget is already available in nginx:alpine for health checks
 COPY --from=publish /app/publish/wwwroot .
 COPY src/GrowDate.Frontend/nginx.conf /etc/nginx/nginx.conf
 EXPOSE 80

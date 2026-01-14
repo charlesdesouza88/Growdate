@@ -1,6 +1,14 @@
 // GrowDate Interactive 2D Map
 console.log('🗺️ Interactive Map script loaded');
 
+// Store Blazor reference
+let blazorReference = null;
+
+window.setBlazorReference = function(dotNetReference) {
+    blazorReference = dotNetReference;
+    console.log('✅ Blazor reference set successfully');
+};
+
 window.loadInteractiveMap = function() {
     console.log('=== LOADING INTERACTIVE 2D MAP ===');
     
@@ -199,13 +207,15 @@ window.selectRegion = function(regionName, element) {
     }
     
     // Try to integrate with Blazor if available
-    if (window.DotNet && typeof window.DotNet.invokeMethodAsync === 'function') {
+    if (blazorReference) {
         try {
-            window.DotNet.invokeMethodAsync('GrowDate.Frontend', 'OnRegionSelected', regionName);
+            blazorReference.invokeMethodAsync('OnMapRegionSelected', regionName);
             console.log('✅ Blazor integration: Region selection sent');
         } catch (e) {
-            console.log('ℹ️ Blazor integration not available:', e.message);
+            console.log('ℹ️ Blazor integration failed:', e.message);
         }
+    } else {
+        console.log('ℹ️ Blazor reference not available');
     }
     
     console.log(`✅ Region ${regionName} selected and highlighted`);
