@@ -20,6 +20,8 @@ builder.Services.AddCors(options =>
             policy.WithOrigins(
                 "http://localhost:5101",
                 "https://localhost:5101",
+                "http://frontend",
+                "http://frontend:80",
                 "https://ideal-winner-5w66vv46wp534jw7-5101.app.github.dev"
             )
             .AllowAnyMethod()
@@ -49,7 +51,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowFrontend");
 
-app.UseHttpsRedirection();
+// Only redirect to HTTPS in production when HTTPS is properly configured
+if (app.Environment.IsDevelopment() || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_HTTPS_PORT")))
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 

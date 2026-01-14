@@ -29,21 +29,24 @@ docker-compose up -d
 
 echo ""
 echo "3️⃣  Waiting for services to be ready..."
-sleep 5
+echo "⏳ This may take a moment while health checks run..."
+sleep 15
 
-# Check if API is running
-if curl -s http://localhost:5100/api/regions > /dev/null; then
-    echo "✅ API is running on http://localhost:5100"
+# Check if API is running and healthy
+if curl -s -f http://localhost:5100/api/regions > /dev/null; then
+    echo "✅ API is running and healthy on http://localhost:5100"
     echo "   Swagger UI: http://localhost:5100/swagger"
 else
-    echo "⚠️  API may still be starting up..."
+    echo "⚠️  API health check failed - checking container status..."
+    docker-compose logs api --tail 10
 fi
 
 # Check if Frontend is running
-if curl -s http://localhost:5101 > /dev/null; then
+if curl -s -f http://localhost:5101 > /dev/null; then
     echo "✅ Frontend is running on http://localhost:5101"
 else
-    echo "⚠️  Frontend may still be starting up..."
+    echo "⚠️  Frontend may still be starting or has issues..."
+    docker-compose logs frontend --tail 10
 fi
 
 echo ""
