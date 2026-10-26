@@ -11,63 +11,41 @@
 <PageTitle>Select Region</PageTitle>
 
 <div class="region-selector">
-    <h1>🌍 Select Your Region</h1>
-    <p>Choose your location on the interactive 3D globe or from the list below</p>
+    <h1>Select Your Region</h1>
+    <p>Choose your location on the map or from the list below</p>
 
     @if (loading)
     {
-        <div class="loading">
+        <div class="loading compact">
             <div class="spinner"></div>
             <p>Loading regions...</p>
         </div>
     }
 
-    <!-- Interactive 2D Map -->
     <div class="map-wrapper">
-        <div id="map-container" class="map-container">
-            <div style="color: white; text-align: center; padding: 20px;">
-                <p>🗺️ Interactive Region Map</p>
-                @if (!regions.Any() && !loading)
-                {
-                    <p style="color: #ff6b6b;">⚠️ No regions loaded from API</p>
-                    <p style="color: #ffd93d;">Using sample regions for demonstration</p>
-                }
-                else if (regions.Any())
-                {
-                    <p style="color: #4CAF50;">✅ @regions.Count() regions loaded from API</p>
-                }
-            </div>
-        </div>
-        <div class="map-info">
-            <p>🖱️ Click regions to select • Hover for details</p>
-        </div>
-        <div style="margin: 10px 0;">
-            <button class="btn" @onclick="LoadInteractiveMap" style="background: #2196F3; color: white; padding: 10px 20px; border: none; border-radius: 5px;">🗺️ Load Interactive Map</button>
-        </div>
+        <div id="map-container" class="map-container"></div>
     </div>
 
     @if (!regions.Any() && !loading)
     {
-        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0;">
-            <h4 style="color: #856404; margin: 0 0 10px 0;">⚠️ API Connection Issue</h4>
-            <p style="color: #856404; margin: 0;">No regions available. Please check your connection to the API at <code>http://localhost:5100</code></p>
+        <div class="alert">
+            <p>No regions available. Start the API at <code>http://localhost:5100</code> and refresh.</p>
         </div>
     }
     else if (regions.Any())
     {
-
         <div class="region-grid">
             @foreach (var region in regions)
             {
-                <div class="region-card @(selectedRegion?.Id == region.Id ? "selected" : "")" 
+                <div class="region-card @(selectedRegion?.Id == region.Id ? "selected" : "")"
                      @onclick="() => OnSelectRegion(region)">
-                    <h3>📍 @region.Name</h3>
+                    <h3>@region.Name</h3>
                     <p><strong>Country:</strong> @region.Country</p>
                     <p><strong>Climate Zone:</strong> @region.ClimateZone</p>
                     <p><strong>Coordinates:</strong> @region.Latitude.ToString("F2"), @region.Longitude.ToString("F2")</p>
                     @if (selectedRegion?.Id == region.Id)
                     {
-                        <div class="selected-indicator">✓ Selected</div>
+                        <div class="selected-indicator">Selected</div>
                     }
                 </div>
             }
@@ -76,8 +54,8 @@
         @if (selectedRegion != null)
         {
             <div class="action-buttons">
-                <button class="btn" @onclick="ViewCalendar">View Calendar →</button>
-                <button class="btn" @onclick="ViewRecommendations">View Recommendations →</button>
+                <button class="btn" @onclick="ViewCalendar">View Calendar</button>
+                <button class="btn" @onclick="ViewRecommendations">View Recommendations</button>
             </div>
         }
     }
@@ -91,66 +69,26 @@
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            Console.WriteLine("🚀 Starting to load regions from API...");
-            Console.WriteLine($"API Base URL from config: {ApiService}");
-            
-            regions = await ApiService.GetRegionsAsync();
-            Console.WriteLine($"✅ Successfully loaded {regions.Count} regions from API");
-            
-            if (regions.Any())
-            {
-                foreach (var region in regions)
-                {
-                    Console.WriteLine($"   - {region.Name} ({region.Country})");
-                }
-            }
-            else
-            {
-                Console.WriteLine("⚠️ No regions returned from API call");
-            }
-        }
-        catch (HttpRequestException httpEx)
-        {
-            Console.WriteLine($"❌ HTTP Error loading regions: {httpEx.Message}");
-            Console.WriteLine($"   Status: {httpEx.Data}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ General error loading regions: {ex.Message}");
-            Console.WriteLine($"   Type: {ex.GetType().Name}");
-            Console.WriteLine($"   Stack: {ex.StackTrace}");
-        }
-        finally
-        {
-            loading = false;
-            Console.WriteLine($"🏁 Loading completed. Final state: {regions.Count} regions loaded");
-        }
+        await RegionState.EnsureLoadedAsync();
+        selectedRegion = RegionState.GetRegion();
+        regions = await ApiService.GetRegionsAsync();
+        loading = false;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!firstRender)
+            return;
+
+        try
         {
-            try
-            {
-                dotNetReference = DotNetObjectReference.Create(this);
-                
-                // Make the reference available globally for JavaScript
-                await JS.InvokeVoidAsync("setBlazorReference", dotNetReference);
-                
-                // Wait a bit for the page to settle
-                await Task.Delay(500);
-                
-                // Load the interactive 2D map
-                await JS.InvokeVoidAsync("loadInteractiveMap");
-                Console.WriteLine("Interactive 2D map initialized successfully");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error initializing interactive map: {ex.Message}");
-            }
+            dotNetReference = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("setBlazorReference", dotNetReference);
+            await JS.InvokeVoidAsync("loadInteractiveMap", regions);
+        }
+        catch (JSException)
+        {
+            // Map script may not be present during prerender or tests.
         }
     }
 
@@ -171,71 +109,20 @@
         RegionState.SetRegion(region);
     }
 
-    private void ViewCalendar()
-    {
-        if (selectedRegion != null)
-        {
-            Navigation.NavigateTo("/calendar");
-        }
-    }
+    private void ViewCalendar() => Navigation.NavigateTo("/calendar");
 
-    private void ViewRecommendations()
-    {
-        if (selectedRegion != null)
-        {
-            Navigation.NavigateTo("/recommendations");
-        }
-    }
-
-    private async Task LoadInteractiveMap()
-    {
-        try
-        {
-            await JS.InvokeVoidAsync("loadInteractiveMap");
-            Console.WriteLine("Interactive 2D map loaded");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"2D map loading failed: {ex.Message}");
-        }
-    }
-
-    [JSInvokable]
-    public async Task OnMapRegionSelected(string regionName)
-    {
-        try
-        {
-            Console.WriteLine($"Region selected via JavaScript: {regionName}");
-            
-            // Find the region by name and select it
-            var region = regions.FirstOrDefault(r => r.Name.Equals(regionName, StringComparison.OrdinalIgnoreCase));
-            if (region != null)
-            {
-                OnSelectRegion(region);
-                await Task.CompletedTask; // To satisfy async requirement
-                StateHasChanged();
-            }
-            else
-            {
-                Console.WriteLine($"Warning: Region '{regionName}' not found in loaded regions");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error handling region selection: {ex.Message}");
-        }
-    }
+    private void ViewRecommendations() => Navigation.NavigateTo("/recommendations");
 
     public async ValueTask DisposeAsync()
     {
         try
         {
-            await JS.InvokeVoidAsync("disposeGlobe");
-            dotNetReference?.Dispose();
+            await JS.InvokeVoidAsync("disposeMap");
         }
-        catch (Exception ex)
+        catch (JSException)
         {
-            Console.WriteLine($"Error disposing globe: {ex.Message}");
         }
+
+        dotNetReference?.Dispose();
     }
 }

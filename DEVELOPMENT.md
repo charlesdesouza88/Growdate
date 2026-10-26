@@ -11,15 +11,15 @@ dotnet build
 ```bash
 cd src/GrowDate.Api
 dotnet run
-# API runs at https://localhost:7000
-# Swagger at https://localhost:7000/swagger
+# API runs at http://localhost:5100
+# Swagger at http://localhost:5100/swagger
 ```
 
 ### Run Frontend (Terminal 2)
 ```bash
 cd src/GrowDate.Frontend
 dotnet run
-# Frontend runs at https://localhost:7001 (or similar)
+# Frontend runs at http://localhost:5101
 ```
 
 ### Run Tests
@@ -91,7 +91,7 @@ SELECT * FROM Crops;
 ## API Endpoints
 
 ### Base URL
-- Development: `https://localhost:7000`
+- Development: `http://localhost:5100`
 
 ### Regions
 - `GET /api/regions` - All regions
@@ -153,7 +153,7 @@ dotnet test /p:CollectCoverage=true
 ## Troubleshooting
 
 ### Frontend can't reach API
-- Check API is running on https://localhost:7000
+- Check API is running on http://localhost:5100
 - Update `src/GrowDate.Frontend/wwwroot/appsettings.json`
 - Check CORS configuration in `Program.cs`
 

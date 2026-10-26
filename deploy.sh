@@ -33,7 +33,7 @@ echo "⏳ This may take a moment while health checks run..."
 sleep 15
 
 # Check if API is running and healthy
-if curl -s -f http://localhost:5100/api/regions > /dev/null; then
+if curl -s -f http://localhost:5100/health > /dev/null; then
     echo "✅ API is running and healthy on http://localhost:5100"
     echo "   Swagger UI: http://localhost:5100/swagger"
 else

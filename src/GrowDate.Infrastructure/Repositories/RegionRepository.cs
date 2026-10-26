@@ -33,17 +33,19 @@ public class RegionRepository : IRegionRepository
 
     public async Task<IEnumerable<Region>> GetByCountryAsync(string country, CancellationToken cancellationToken = default)
     {
+        var normalized = country.Trim().ToLower();
         return await _context.Regions
             .AsNoTracking()
-            .Where(r => r.Country == country)
+            .Where(r => r.Country.ToLower() == normalized)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<Region>> GetByClimateZoneAsync(string zone, CancellationToken cancellationToken = default)
     {
+        var normalized = zone.Trim().ToLower();
         return await _context.Regions
             .AsNoTracking()
-            .Where(r => r.ClimateZone == zone)
+            .Where(r => r.ClimateZone.ToLower() == normalized)
             .ToListAsync(cancellationToken);
     }
 

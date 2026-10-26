@@ -82,14 +82,14 @@ GrowDate/
 cd src/GrowDate.Api
 dotnet run
 ```
-The API will start at `https://localhost:7000` and `http://localhost:5000`
+The API will start at `http://localhost:5100` (Swagger at `/swagger`).
 
 **Terminal 2 - Start the Frontend:**
 ```bash
 cd src/GrowDate.Frontend
 dotnet run
 ```
-The frontend will start at `https://localhost:7001` (or similar)
+The frontend will start at `http://localhost:5101`.
 
 #### Option 2: Using Visual Studio
 
@@ -113,7 +113,7 @@ dotnet test
 
 ## 📖 API Documentation
 
-Once the API is running, visit `https://localhost:7000/swagger` to see the interactive API documentation.
+Once the API is running, visit `http://localhost:5100/swagger` to see the interactive API documentation.
 
 ### Key Endpoints
 

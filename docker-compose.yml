@@ -8,11 +8,13 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:5100
+    volumes:
+      - growdate-data:/app/data
     networks:
       - growdate-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5100/api/regions"]
+      test: ["CMD", "curl", "-f", "http://localhost:5100/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -36,6 +38,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+volumes:
+  growdate-data:
 
 networks:
   growdate-network:

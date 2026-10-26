@@ -25,13 +25,10 @@ public class RecommendationService : IRecommendationService
 
         foreach (var crop in crops)
         {
-            // Check if crop is suitable for this region
-            if (!crop.SuitableZones.Any(z => z.Equals(region.ClimateZone, StringComparison.OrdinalIgnoreCase)))
+            if (!IsSuitableForRegion(crop, region))
                 continue;
 
-            var recommendation = CalculateRecommendation(crop, region, selectedDate);
-            if (recommendation != null)
-                recommendations.Add(recommendation);
+            recommendations.Add(CalculateRecommendation(crop, region, selectedDate));
         }
 
         return recommendations.OrderByDescending(r => r.IsIdealTime);
@@ -44,7 +41,7 @@ public class RecommendationService : IRecommendationService
             return Enumerable.Empty<Crop>();
 
         var crops = await _cropRepository.GetAllAsync(cancellationToken);
-        return crops.Where(c => c.SuitableZones.Any(z => z.Equals(region.ClimateZone, StringComparison.OrdinalIgnoreCase)));
+        return crops.Where(c => IsSuitableForRegion(c, region));
     }
 
     public async Task<IEnumerable<Crop>> GetCropsForDateRangeAsync(int regionId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
@@ -54,9 +51,12 @@ public class RecommendationService : IRecommendationService
             return Enumerable.Empty<Crop>();
 
         var crops = await _cropRepository.GetAllAsync(cancellationToken);
-        return crops.Where(c => 
-            c.SuitableZones.Any(z => z.Equals(region.ClimateZone, StringComparison.OrdinalIgnoreCase)) &&
-            IsPlantingSeasonOverlap(c, startDate, endDate));
+        return crops.Where(c =>
+            IsSuitableForRegion(c, region) &&
+            PlantingWindowCalculator.OverlapsRange(
+                c.PlantingStartMonth, c.PlantingStartDay,
+                c.PlantingEndMonth, c.PlantingEndDay,
+                region.Latitude, startDate, endDate));
     }
 
     public async Task<PlantingRecommendation?> GetDetailedRecommendationAsync(int cropId, int regionId, DateTime selectedDate, CancellationToken cancellationToken = default)
@@ -70,13 +70,19 @@ public class RecommendationService : IRecommendationService
         return CalculateRecommendation(crop, region, selectedDate);
     }
 
-    private PlantingRecommendation CalculateRecommendation(Crop crop, Region region, DateTime selectedDate)
+    private static bool IsSuitableForRegion(Crop crop, Region region) =>
+        crop.SuitableZones.Any(z => z.Equals(region.ClimateZone, StringComparison.OrdinalIgnoreCase));
+
+    private static PlantingRecommendation CalculateRecommendation(Crop crop, Region region, DateTime selectedDate)
     {
-        var (windowStart, windowEnd) = GetPlantingWindow(crop, selectedDate);
+        selectedDate = selectedDate.Date;
+        var (windowStart, windowEnd) = PlantingWindowCalculator.GetWindow(
+            crop.PlantingStartMonth, crop.PlantingStartDay,
+            crop.PlantingEndMonth, crop.PlantingEndDay,
+            region.Latitude, selectedDate);
 
         var isInSeason = selectedDate >= windowStart && selectedDate <= windowEnd;
-        var status = DetermineStatus(selectedDate, windowStart, windowEnd, crop);
-        var harvestDate = selectedDate.AddDays(crop.DaysToGermination + crop.DaysToHarvest);
+        var status = PlantingWindowCalculator.DetermineStatus(selectedDate, windowStart, windowEnd);
 
         return new PlantingRecommendation
         {
@@ -87,29 +93,13 @@ public class RecommendationService : IRecommendationService
             PlantingWindowStart = windowStart,
             PlantingWindowEnd = windowEnd,
             EstimatedGerminationDate = selectedDate.AddDays(crop.DaysToGermination),
-            EstimatedHarvestDate = harvestDate,
+            EstimatedHarvestDate = selectedDate.AddDays(crop.DaysToHarvest),
             Status = status,
             Notes = GenerateNotes(crop, region, isInSeason, status)
         };
     }
 
-    private string DetermineStatus(DateTime selectedDate, DateTime plantingStart, DateTime plantingEnd, Crop crop)
-    {
-        if (selectedDate >= plantingStart && selectedDate <= plantingEnd)
-            return "Ideal";
-
-        var daysUntilStart = (plantingStart - selectedDate).Days;
-        var daysPastEnd = (selectedDate - plantingEnd).Days;
-
-        if (daysUntilStart > 0 && daysUntilStart <= 30)
-            return "Coming Soon";
-        if (daysPastEnd > 0 && daysPastEnd <= 30)
-            return "Late Season";
-
-        return "Out of Season";
-    }
-
-    private string GenerateNotes(Crop crop, Region region, bool isInSeason, string status)
+    private static string GenerateNotes(Crop crop, Region region, bool isInSeason, string status)
     {
         var notes = new List<string>();
 
@@ -122,9 +112,12 @@ public class RecommendationService : IRecommendationService
             notes.Add($"{crop.Name} is currently out of season in {region.Name}.");
         }
 
+        if (region.Latitude < 0)
+            notes.Add("Planting window adjusted for the Southern Hemisphere.");
+
         notes.Add($"Climate Zone: {region.ClimateZone}");
         notes.Add($"Germination: {crop.DaysToGermination} days");
-        notes.Add($"Harvest: {crop.DaysToHarvest} days after germination");
+        notes.Add($"Harvest: {crop.DaysToHarvest} days after planting");
 
         if (status == "Coming Soon")
         {
@@ -136,33 +129,5 @@ public class RecommendationService : IRecommendationService
         }
 
         return string.Join(" ", notes);
-    }
-
-    private bool IsPlantingSeasonOverlap(Crop crop, DateTime startDate, DateTime endDate)
-    {
-        var (windowStart, windowEnd) = GetPlantingWindow(crop, startDate);
-        return windowStart <= endDate && windowEnd >= startDate;
-    }
-
-    private (DateTime Start, DateTime End) GetPlantingWindow(Crop crop, DateTime selectedDate)
-    {
-        var year = selectedDate.Year;
-        var start = new DateTime(year, crop.PlantingStartMonth, crop.PlantingStartDay);
-        var end = new DateTime(year, crop.PlantingEndMonth, crop.PlantingEndDay);
-
-        // Handle wrap-around seasons (e.g., Nov-Feb)
-        if (start <= end)
-            return (start, end);
-
-        // If selected date is in the early-year segment (before or on end), season started last year
-        if (selectedDate <= end)
-        {
-            start = start.AddYears(-1);
-            return (start, end);
-        }
-
-        // Otherwise season continues into next year
-        end = end.AddYears(1);
-        return (start, end);
     }
 }

@@ -1,44 +1,37 @@
 using System.Net.Http.Json;
 using GrowDate.Core.DTOs;
+using Microsoft.Extensions.Logging;
 
 namespace GrowDate.Frontend.Services;
 
 public class ApiService
 {
     private readonly HttpClient _httpClient;
+    private readonly ILogger<ApiService> _logger;
 
-    public ApiService(HttpClient httpClient)
+    public ApiService(HttpClient httpClient, ILogger<ApiService> logger)
     {
         _httpClient = httpClient;
+        _logger = logger;
     }
 
-    // Regions
     public async Task<List<RegionDto>> GetRegionsAsync()
     {
         try
         {
-            Console.WriteLine($"🌐 Making API call to: {_httpClient.BaseAddress}api/regions");
             var response = await _httpClient.GetAsync("api/regions");
-            Console.WriteLine($"📡 API Response Status: {response.StatusCode}");
-            
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                var regions = await response.Content.ReadFromJsonAsync<List<RegionDto>>();
-                Console.WriteLine($"✅ Successfully parsed {regions?.Count ?? 0} regions from API");
-                return regions ?? new List<RegionDto>();
-            }
-            else
-            {
-                Console.WriteLine($"❌ API call failed with status: {response.StatusCode}");
-                Console.WriteLine($"📄 Response content: {await response.Content.ReadAsStringAsync()}");
+                _logger.LogWarning("GET api/regions failed with {StatusCode}", response.StatusCode);
                 return new List<RegionDto>();
             }
+
+            return await response.Content.ReadFromJsonAsync<List<RegionDto>>() ?? new List<RegionDto>();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Exception in GetRegionsAsync: {ex.Message}");
-            Console.WriteLine($"🔍 Exception type: {ex.GetType().Name}");
-            throw;
+            _logger.LogError(ex, "Failed to load regions from {BaseAddress}", _httpClient.BaseAddress);
+            return new List<RegionDto>();
         }
     }
 
@@ -47,7 +40,6 @@ public class ApiService
         return await _httpClient.GetFromJsonAsync<RegionDto>($"api/regions/{id}");
     }
 
-    // Crops
     public async Task<List<CropDto>> GetCropsAsync()
     {
         return await _httpClient.GetFromJsonAsync<List<CropDto>>("api/crops") ?? new List<CropDto>();
@@ -60,10 +52,10 @@ public class ApiService
 
     public async Task<List<CropDto>> GetCropsByZoneAsync(string zone)
     {
-        return await _httpClient.GetFromJsonAsync<List<CropDto>>($"api/crops/by-zone/{zone}") ?? new List<CropDto>();
+        return await _httpClient.GetFromJsonAsync<List<CropDto>>(
+            $"api/crops/by-zone/{Uri.EscapeDataString(zone)}") ?? new List<CropDto>();
     }
 
-    // Recommendations
     public async Task<List<RecommendationDto>> GetRecommendationsAsync(int regionId, DateTime selectedDate)
     {
         var dateStr = selectedDate.ToString("yyyy-MM-dd");
@@ -75,6 +67,14 @@ public class ApiService
     {
         return await _httpClient.GetFromJsonAsync<List<CropDto>>(
             $"api/recommendations/crops?regionId={regionId}") ?? new List<CropDto>();
+    }
+
+    public async Task<List<CropDto>> GetCropsForDateRangeAsync(int regionId, DateTime startDate, DateTime endDate)
+    {
+        var start = startDate.ToString("yyyy-MM-dd");
+        var end = endDate.ToString("yyyy-MM-dd");
+        return await _httpClient.GetFromJsonAsync<List<CropDto>>(
+            $"api/recommendations/date-range?regionId={regionId}&startDate={start}&endDate={end}") ?? new List<CropDto>();
     }
 
     public async Task<RecommendationDto?> GetDetailedRecommendationAsync(int cropId, int regionId, DateTime selectedDate)

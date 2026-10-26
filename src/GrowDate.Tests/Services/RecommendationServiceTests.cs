@@ -206,7 +206,7 @@ public class RecommendationServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal(selectedDate.AddDays(7), result.EstimatedGerminationDate);
-        Assert.Equal(selectedDate.AddDays(77), result.EstimatedHarvestDate); // 7 + 70
+        Assert.Equal(selectedDate.AddDays(70), result.EstimatedHarvestDate);
     }
 
     [Fact]
@@ -251,5 +251,83 @@ public class RecommendationServiceTests
         Assert.Equal(new DateTime(2023, 11, 1), recommendation.PlantingWindowStart);
         Assert.Equal(new DateTime(2024, 2, 15), recommendation.PlantingWindowEnd);
         Assert.Equal("Ideal", recommendation.Status);
+    }
+
+    [Fact]
+    public async Task GetRecommendationsAsync_SouthernHemisphere_ShiftsPlantingWindowBySixMonths()
+    {
+        var region = new Region
+        {
+            Id = 4,
+            Name = "São Paulo State",
+            ClimateZone = "Tropical",
+            Country = "Brazil",
+            Latitude = -23.5505,
+            Longitude = -46.6333
+        };
+
+        var crops = new List<Crop>
+        {
+            new Crop
+            {
+                Id = 1,
+                Name = "Tomatoes",
+                Category = "Vegetable",
+                PlantingStartMonth = 3,
+                PlantingStartDay = 15,
+                PlantingEndMonth = 6,
+                PlantingEndDay = 30,
+                DaysToGermination = 7,
+                DaysToHarvest = 70,
+                SuitableZones = new List<string> { "Tropical" }
+            }
+        };
+
+        _mockRegionRepository.Setup(r => r.GetByIdAsync(4, It.IsAny<CancellationToken>())).ReturnsAsync(region);
+        _mockCropRepository.Setup(c => c.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(crops);
+
+        var result = await _service.GetRecommendationsAsync(4, new DateTime(2024, 10, 1));
+        var recommendation = Assert.Single(result);
+
+        Assert.True(recommendation.IsIdealTime);
+        Assert.Equal(new DateTime(2024, 9, 15), recommendation.PlantingWindowStart);
+        Assert.Equal(new DateTime(2024, 12, 30), recommendation.PlantingWindowEnd);
+        Assert.Equal("Ideal", recommendation.Status);
+    }
+
+    [Fact]
+    public async Task GetCropsForDateRangeAsync_RangeSpanningYearBoundary_IncludesNextSeason()
+    {
+        var region = new Region
+        {
+            Id = 1,
+            Name = "Test Region",
+            ClimateZone = "Zone 9",
+            Latitude = 36.0,
+            Longitude = -119.0
+        };
+
+        var crops = new List<Crop>
+        {
+            new Crop
+            {
+                Id = 1,
+                Name = "Tomatoes",
+                PlantingStartMonth = 3,
+                PlantingStartDay = 15,
+                PlantingEndMonth = 6,
+                PlantingEndDay = 30,
+                SuitableZones = new List<string> { "Zone 9" }
+            }
+        };
+
+        _mockRegionRepository.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(region);
+        _mockCropRepository.Setup(c => c.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(crops);
+
+        var result = await _service.GetCropsForDateRangeAsync(
+            1, new DateTime(2024, 12, 1), new DateTime(2025, 3, 20));
+
+        Assert.Single(result);
+        Assert.Equal("Tomatoes", result.First().Name);
     }
 }

@@ -1,28 +1,29 @@
 @page "/calendar"
 @using GrowDate.Frontend.Services
 @using GrowDate.Core.DTOs
+@using GrowDate.Core.Services
 @inject ApiService ApiService
 @inject RegionStateService RegionState
 
 <PageTitle>Planting Calendar</PageTitle>
 
 <div class="calendar-container">
-    <h1>🗓️ Planting Calendar</h1>
-    
+    <h1>Planting Calendar</h1>
+
     @if (selectedRegion == null)
     {
         <div class="alert">
-            <p>⚠️ Please <a href="select-region">select a region</a> first to see planting recommendations.</p>
+            <p>Please <a href="select-region">select a region</a> first to see planting recommendations.</p>
         </div>
     }
     else
     {
         <p>Viewing calendar for: <strong>@selectedRegion.Name</strong></p>
-        
+
         <div class="calendar-header">
-            <button class="btn" @onclick="PreviousMonth">← Previous</button>
+            <button class="btn" @onclick="PreviousMonth">Previous</button>
             <h2>@currentDate.ToString("MMMM yyyy")</h2>
-            <button class="btn" @onclick="NextMonth">Next →</button>
+            <button class="btn" @onclick="NextMonth">Next</button>
         </div>
 
         <div class="calendar-grid">
@@ -50,10 +51,10 @@
                 <div class="recommendation-list">
                     @foreach (var rec in recommendations.OrderByDescending(r => r.IsIdealTime))
                     {
-                        <div class="recommendation-card @rec.Status.ToLower().Replace(" ", "-")">
+                        <div class="recommendation-card @StatusClass(rec.Status)">
                             <div class="crop-header">
                                 <span class="crop-name">@rec.Crop.Name</span>
-                                <span class="status-badge @rec.Status.ToLower().Replace(" ", "-")">@rec.Status</span>
+                                <span class="status-badge @StatusClass(rec.Status)">@rec.Status</span>
                             </div>
                             <p>@rec.Notes</p>
                             <div class="crop-details">
@@ -80,60 +81,38 @@
     private DateTime? selectedDate;
     private List<RecommendationDto> recommendations = new();
     private HashSet<int> plantingDays = new();
+    private List<CropDto> regionCrops = new();
 
     protected override async Task OnInitializedAsync()
     {
+        await RegionState.EnsureLoadedAsync();
         selectedRegion = RegionState.GetRegion();
-        if (selectedRegion == null)
-        {
-            var regions = await ApiService.GetRegionsAsync();
-            if (regions.Any())
-            {
-                selectedRegion = regions.First();
-                RegionState.SetRegion(selectedRegion);
-            }
-        }
         if (selectedRegion != null)
         {
-            await LoadPlantingDays();
+            regionCrops = await ApiService.GetCropsForRegionAsync(selectedRegion.Id);
+            LoadPlantingDays();
         }
     }
 
-    private async Task LoadPlantingDays()
+    private void LoadPlantingDays()
     {
         if (selectedRegion == null) return;
 
         var startDate = new DateTime(currentDate.Year, currentDate.Month, 1);
         var endDate = startDate.AddMonths(1).AddDays(-1);
-
-        var crops = await ApiService.GetCropsForRegionAsync(selectedRegion.Id);
         plantingDays.Clear();
 
-        foreach (var crop in crops)
+        foreach (var crop in regionCrops)
         {
-            var plantingStart = new DateTime(currentDate.Year, crop.PlantingStartMonth, crop.PlantingStartDay);
-            var plantingEnd = new DateTime(currentDate.Year, crop.PlantingEndMonth, crop.PlantingEndDay);
-
-            // Handle wrap-around seasons (e.g., Nov-Feb)
-            if (plantingStart > plantingEnd)
-            {
-                // Check if we're in the early-year segment (before or on end month)
-                if (currentDate.Month <= plantingEnd.Month)
-                {
-                    plantingStart = plantingStart.AddYears(-1);
-                }
-                else
-                {
-                    plantingEnd = plantingEnd.AddYears(1);
-                }
-            }
-
             for (var date = startDate; date <= endDate; date = date.AddDays(1))
             {
+                var (plantingStart, plantingEnd) = PlantingWindowCalculator.GetWindow(
+                    crop.PlantingStartMonth, crop.PlantingStartDay,
+                    crop.PlantingEndMonth, crop.PlantingEndDay,
+                    selectedRegion.Latitude, date);
+
                 if (date >= plantingStart && date <= plantingEnd)
-                {
                     plantingDays.Add(date.Day);
-                }
             }
         }
     }
@@ -147,50 +126,51 @@
 
         var days = new List<DateTime>();
         for (var date = startDay; date <= endDay; date = date.AddDays(1))
-        {
             days.Add(date);
-        }
         return days;
     }
 
     private string GetDayClass(DateTime day)
     {
         var classes = new List<string>();
-        
+
         if (day.Month != currentDate.Month)
             classes.Add("other-month");
-        
+
         if (selectedDate.HasValue && day.Date == selectedDate.Value.Date)
             classes.Add("selected");
-        
+
         if (day.Month == currentDate.Month && plantingDays.Contains(day.Day))
             classes.Add("has-planting");
-        
+
         return string.Join(" ", classes);
     }
+
+    private static string StatusClass(string status) =>
+        status.ToLowerInvariant().Replace(" ", "-");
 
     private async Task SelectDate(DateTime date)
     {
         selectedDate = date;
         if (selectedRegion != null)
-        {
             recommendations = await ApiService.GetRecommendationsAsync(selectedRegion.Id, date);
-        }
     }
 
-    private async Task PreviousMonth()
+    private Task PreviousMonth()
     {
         currentDate = currentDate.AddMonths(-1);
         selectedDate = null;
         recommendations.Clear();
-        await LoadPlantingDays();
+        LoadPlantingDays();
+        return Task.CompletedTask;
     }
 
-    private async Task NextMonth()
+    private Task NextMonth()
     {
         currentDate = currentDate.AddMonths(1);
         selectedDate = null;
         recommendations.Clear();
-        await LoadPlantingDays();
+        LoadPlantingDays();
+        return Task.CompletedTask;
     }
 }

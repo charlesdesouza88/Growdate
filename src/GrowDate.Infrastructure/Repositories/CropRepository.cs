@@ -28,9 +28,10 @@ public class CropRepository : ICropRepository
 
     public async Task<IEnumerable<Crop>> GetByCategoryAsync(string category, CancellationToken cancellationToken = default)
     {
+        var normalized = category.Trim().ToLower();
         return await _context.Crops
             .AsNoTracking()
-            .Where(c => c.Category == category)
+            .Where(c => c.Category.ToLower() == normalized)
             .ToListAsync(cancellationToken);
     }
 

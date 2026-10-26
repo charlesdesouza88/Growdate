@@ -1,4 +1,6 @@
 @inherits LayoutComponentBase
+@using GrowDate.Frontend.Services
+@inject RegionStateService RegionState
 
 <div class="page">
     <div class="sidebar">
@@ -15,3 +17,10 @@
         </article>
     </main>
 </div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await RegionState.EnsureLoadedAsync();
+    }
+}

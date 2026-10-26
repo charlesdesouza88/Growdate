@@ -7,12 +7,12 @@
 <PageTitle>Crop Recommendations</PageTitle>
 
 <div class="recommendations-container">
-    <h1>🌾 Crop Recommendations</h1>
+    <h1>Crop Recommendations</h1>
 
     @if (selectedRegion == null)
     {
         <div class="alert">
-            <p>⚠️ Please <a href="select-region">select a region</a> first to see recommendations.</p>
+            <p>Please <a href="select-region">select a region</a> first to see recommendations.</p>
         </div>
     }
     else
@@ -24,13 +24,13 @@
             </div>
             <div>
                 <label for="dateSelect">Select Date:</label>
-                <input id="dateSelect" type="date" @bind="selectedDate" @bind:event="oninput" @onchange="LoadRecommendations" />
+                <input id="dateSelect" type="date" @bind="selectedDate" @bind:after="LoadRecommendations" />
             </div>
         </div>
 
         @if (loading)
         {
-            <div class="loading">
+            <div class="loading compact">
                 <div class="spinner"></div>
                 <p>Loading recommendations...</p>
             </div>
@@ -49,12 +49,12 @@
             <div class="recommendation-list">
                 @foreach (var rec in recommendations.OrderByDescending(r => r.IsIdealTime))
                 {
-                    <div class="recommendation-card @rec.Status.ToLower().Replace(" ", "-")">
+                    <div class="recommendation-card @StatusClass(rec.Status)">
                         <div class="crop-header">
                             <span class="crop-name">@rec.Crop.Name</span>
-                            <span class="status-badge @rec.Status.ToLower().Replace(" ", "-")">@rec.Status</span>
+                            <span class="status-badge @StatusClass(rec.Status)">@rec.Status</span>
                         </div>
-                        
+
                         <div class="crop-category">
                             <span>Category: @rec.Crop.Category</span>
                         </div>
@@ -102,20 +102,10 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await RegionState.EnsureLoadedAsync();
         selectedRegion = RegionState.GetRegion();
-        if (selectedRegion == null)
-        {
-            var regions = await ApiService.GetRegionsAsync();
-            if (regions.Any())
-            {
-                selectedRegion = regions.First();
-                RegionState.SetRegion(selectedRegion);
-            }
-        }
         if (selectedRegion != null)
-        {
             await LoadRecommendations();
-        }
     }
 
     private async Task LoadRecommendations()
@@ -127,9 +117,8 @@
         {
             recommendations = await ApiService.GetRecommendationsAsync(selectedRegion.Id, selectedDate);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"Error loading recommendations: {ex.Message}");
             recommendations.Clear();
         }
         finally
@@ -137,4 +126,7 @@
             loading = false;
         }
     }
+
+    private static string StatusClass(string status) =>
+        status.ToLowerInvariant().Replace(" ", "-");
 }
