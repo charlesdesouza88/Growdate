@@ -11,8 +11,9 @@
 <PageTitle>Select Region</PageTitle>
 
 <div class="region-selector">
-    <h1>Select Your Region</h1>
-    <p>Choose your location on the map or from the list below</p>
+    <p class="kicker">Where you grow</p>
+    <h1 class="page-title">Select your region</h1>
+    <p class="page-intro">Choose a climate on the map or from the list. Southern Hemisphere windows are shifted for you.</p>
 
     @if (loading)
     {
@@ -54,8 +55,8 @@
         @if (selectedRegion != null)
         {
             <div class="action-buttons">
-                <button class="btn" @onclick="ViewCalendar">View Calendar</button>
-                <button class="btn" @onclick="ViewRecommendations">View Recommendations</button>
+                <button class="btn" @onclick="ViewCalendar">View calendar</button>
+                <button class="btn btn-ghost" @onclick="ViewRecommendations">View crops</button>
             </div>
         }
     }
@@ -65,6 +66,7 @@
     private List<RegionDto> regions = new();
     private RegionDto? selectedRegion;
     private bool loading = true;
+    private bool mapLoaded;
     private DotNetObjectReference<SelectRegion>? dotNetReference;
 
     protected override async Task OnInitializedAsync()
@@ -77,14 +79,20 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
-            return;
-
         try
         {
-            dotNetReference = DotNetObjectReference.Create(this);
-            await JS.InvokeVoidAsync("setBlazorReference", dotNetReference);
-            await JS.InvokeVoidAsync("loadInteractiveMap", regions);
+            if (firstRender)
+            {
+                dotNetReference = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("setBlazorReference", dotNetReference);
+            }
+
+            // First render often happens during the API await, so wait until regions exist.
+            if (!mapLoaded && regions.Any())
+            {
+                await JS.InvokeVoidAsync("loadInteractiveMap", regions);
+                mapLoaded = true;
+            }
         }
         catch (JSException)
         {
