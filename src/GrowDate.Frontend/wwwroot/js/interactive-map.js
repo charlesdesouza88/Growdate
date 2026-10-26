@@ -22,7 +22,7 @@ window.loadInteractiveMap = function (regions) {
 
     const markerMarkup = markers.map((region) => `
         <g class="region-marker" data-region-id="${region.id}" onclick="selectRegionById(${region.id}, this)" style="cursor: pointer;">
-            <circle cx="${region.x}" cy="${region.y}" r="2.4" fill="#2e7d32" stroke="#fff" stroke-width="0.6">
+            <circle cx="${region.x}" cy="${region.y}" r="2.6" fill="#2f5d3a" stroke="#fffcf6" stroke-width="0.7">
                 <title>${escapeHtml(region.name)} (${escapeHtml(region.climateZone)})</title>
             </circle>
         </g>
@@ -31,8 +31,8 @@ window.loadInteractiveMap = function (regions) {
     container.innerHTML = `
         <div class="map-surface">
             <svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet" class="map-svg" role="img" aria-label="Growing regions">
-                <rect width="100" height="60" fill="#d7e9f7"></rect>
-                <path d="M8,22 C18,14 28,16 32,22 C36,18 44,16 48,22 C58,14 70,18 78,16 C86,20 90,28 86,36 C80,42 68,40 60,44 C48,48 40,42 30,44 C18,46 10,40 8,32 Z" fill="#c5e1a5" opacity="0.75"></path>
+                <rect width="100" height="60" fill="#e7efe4"></rect>
+                <path d="M8,22 C18,14 28,16 32,22 C36,18 44,16 48,22 C58,14 70,18 78,16 C86,20 90,28 86,36 C80,42 68,40 60,44 C48,48 40,42 30,44 C18,46 10,40 8,32 Z" fill="#c5d6bf" opacity="0.9"></path>
                 ${markerMarkup}
             </svg>
             <p class="map-hint">Click a marker to select a growing region. Hover for the name.</p>
@@ -46,13 +46,13 @@ window.selectRegionById = function (regionId, element) {
     const container = document.getElementById('map-container');
     if (container) {
         container.querySelectorAll('circle').forEach((circle) => {
-            circle.setAttribute('fill', '#2e7d32');
-            circle.setAttribute('r', '2.4');
+            circle.setAttribute('fill', '#2f5d3a');
+            circle.setAttribute('r', '2.6');
         });
         const circle = element ? element.querySelector('circle') : null;
         if (circle) {
-            circle.setAttribute('fill', '#f9a825');
-            circle.setAttribute('r', '3.2');
+            circle.setAttribute('fill', '#c47b2a');
+            circle.setAttribute('r', '3.4');
         }
     }
 

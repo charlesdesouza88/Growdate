@@ -11,8 +11,9 @@
 <PageTitle>Select Region</PageTitle>
 
 <div class="region-selector">
-    <h1>Select Your Region</h1>
-    <p>Choose your location on the map or from the list below</p>
+    <p class="kicker">Where you grow</p>
+    <h1 class="page-title">Select your region</h1>
+    <p class="page-intro">Choose a climate on the map or from the list. Southern Hemisphere windows are shifted for you.</p>
 
     @if (loading)
     {
@@ -54,8 +55,8 @@
         @if (selectedRegion != null)
         {
             <div class="action-buttons">
-                <button class="btn" @onclick="ViewCalendar">View Calendar</button>
-                <button class="btn" @onclick="ViewRecommendations">View Recommendations</button>
+                <button class="btn" @onclick="ViewCalendar">View calendar</button>
+                <button class="btn btn-ghost" @onclick="ViewRecommendations">View crops</button>
             </div>
         }
     }

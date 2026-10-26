@@ -8,22 +8,23 @@
 <PageTitle>Planting Calendar</PageTitle>
 
 <div class="calendar-container">
-    <h1>Planting Calendar</h1>
+    <p class="kicker">In the ground</p>
+    <h1 class="page-title">Planting calendar</h1>
 
     @if (selectedRegion == null)
     {
         <div class="alert">
-            <p>Please <a href="select-region">select a region</a> first to see planting recommendations.</p>
+            <p>Please <a href="select-region">select a region</a> first to see planting days.</p>
         </div>
     }
     else
     {
-        <p>Viewing calendar for: <strong>@selectedRegion.Name</strong></p>
+        <p class="region-meta">Showing <strong>@selectedRegion.Name</strong></p>
 
         <div class="calendar-header">
-            <button class="btn" @onclick="PreviousMonth">Previous</button>
+            <button class="btn btn-ghost" @onclick="PreviousMonth">Previous</button>
             <h2>@currentDate.ToString("MMMM yyyy")</h2>
-            <button class="btn" @onclick="NextMonth">Next</button>
+            <button class="btn btn-ghost" @onclick="NextMonth">Next</button>
         </div>
 
         <div class="calendar-grid">
@@ -38,7 +39,7 @@
                     <div class="day-number">@day.Day</div>
                     @if (day.Month == currentDate.Month && plantingDays.Contains(day.Day))
                     {
-                        <div class="planting-indicator">🌱</div>
+                        <div class="planting-indicator" aria-hidden="true"></div>
                     }
                 </div>
             }

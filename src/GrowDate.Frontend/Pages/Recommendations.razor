@@ -7,7 +7,8 @@
 <PageTitle>Crop Recommendations</PageTitle>
 
 <div class="recommendations-container">
-    <h1>Crop Recommendations</h1>
+    <p class="kicker">What to plant</p>
+    <h1 class="page-title">Crop recommendations</h1>
 
     @if (selectedRegion == null)
     {
@@ -20,7 +21,7 @@
         <div class="filter-section">
             <div>
                 <label>Region: <strong>@selectedRegion.Name</strong></label>
-                <a href="select-region" class="btn">Change Region</a>
+                <a href="select-region" class="btn btn-ghost">Change region</a>
             </div>
             <div>
                 <label for="dateSelect">Select Date:</label>
