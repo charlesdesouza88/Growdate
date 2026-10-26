@@ -66,6 +66,7 @@
     private List<RegionDto> regions = new();
     private RegionDto? selectedRegion;
     private bool loading = true;
+    private bool mapLoaded;
     private DotNetObjectReference<SelectRegion>? dotNetReference;
 
     protected override async Task OnInitializedAsync()
@@ -78,14 +79,20 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
-            return;
-
         try
         {
-            dotNetReference = DotNetObjectReference.Create(this);
-            await JS.InvokeVoidAsync("setBlazorReference", dotNetReference);
-            await JS.InvokeVoidAsync("loadInteractiveMap", regions);
+            if (firstRender)
+            {
+                dotNetReference = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("setBlazorReference", dotNetReference);
+            }
+
+            // First render often happens during the API await, so wait until regions exist.
+            if (!mapLoaded && regions.Any())
+            {
+                await JS.InvokeVoidAsync("loadInteractiveMap", regions);
+                mapLoaded = true;
+            }
         }
         catch (JSException)
         {

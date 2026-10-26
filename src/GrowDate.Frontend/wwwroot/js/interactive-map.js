@@ -22,7 +22,7 @@ window.loadInteractiveMap = function (regions) {
 
     const markerMarkup = markers.map((region) => `
         <g class="region-marker" data-region-id="${region.id}" onclick="selectRegionById(${region.id}, this)" style="cursor: pointer;">
-            <circle cx="${region.x}" cy="${region.y}" r="2.6" fill="#2f5d3a" stroke="#fffcf6" stroke-width="0.7">
+            <circle cx="${region.x}" cy="${region.y}" r="3.4" fill="#2f5d3a" stroke="#fffcf6" stroke-width="0.9">
                 <title>${escapeHtml(region.name)} (${escapeHtml(region.climateZone)})</title>
             </circle>
         </g>
@@ -47,12 +47,12 @@ window.selectRegionById = function (regionId, element) {
     if (container) {
         container.querySelectorAll('circle').forEach((circle) => {
             circle.setAttribute('fill', '#2f5d3a');
-            circle.setAttribute('r', '2.6');
+            circle.setAttribute('r', '3.4');
         });
         const circle = element ? element.querySelector('circle') : null;
         if (circle) {
             circle.setAttribute('fill', '#c47b2a');
-            circle.setAttribute('r', '3.4');
+            circle.setAttribute('r', '4.4');
         }
     }
 
