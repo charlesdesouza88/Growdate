@@ -555,6 +555,14 @@ main {
     background: #e7efe4;
 }
 
+.map-svg .region-marker {
+    cursor: pointer;
+}
+
+.map-svg .marker-label {
+    pointer-events: auto;
+}
+
 .map-hint {
     margin: 8px 0 0;
     color: var(--muted);
