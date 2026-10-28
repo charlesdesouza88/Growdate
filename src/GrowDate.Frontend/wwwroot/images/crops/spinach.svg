@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Spinach">
+  <rect width="100" height="100" rx="18" fill="#f6f1e7"/>
+  <circle cx="50" cy="52" r="38" fill="#d7e4d0" opacity="0.55"/>
+  <path d="M47 82 L47 50" stroke="#4c8c5c" stroke-width="3" stroke-linecap="round"/>
+  
+  <ellipse cx="47" cy="36" rx="11" ry="9" fill="#4c8c5c" stroke="#1c2a1f" stroke-width="1.2"/>
+  <ellipse cx="40" cy="26" rx="7" ry="4" fill="#4c8c5c" transform="rotate(-30 40 26)"/>
+  <ellipse cx="55" cy="27" rx="7" ry="4" fill="#2f5d3a" transform="rotate(25 55 27)"/>
+</svg>

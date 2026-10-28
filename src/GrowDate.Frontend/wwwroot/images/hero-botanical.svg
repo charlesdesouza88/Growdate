@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Field journal botanicals">
+  <rect width="640" height="360" rx="24" fill="#e7efe4"/>
+  <path d="M40 300 C120 220 160 160 200 80" fill="none" stroke="#2f5d3a" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="168" cy="150" rx="38" ry="16" fill="#4c8c5c" transform="rotate(-28 168 150)"/>
+  <ellipse cx="210" cy="110" rx="32" ry="14" fill="#2f5d3a" transform="rotate(20 210 110)"/>
+  <circle cx="330" cy="150" r="54" fill="#c47b2a"/>
+  <circle cx="330" cy="150" r="22" fill="#fffcf6"/>
+  <circle cx="278" cy="150" r="28" fill="#b85c38"/>
+  <circle cx="382" cy="150" r="28" fill="#b85c38"/>
+  <circle cx="330" cy="98" r="28" fill="#c47b2a"/>
+  <circle cx="330" cy="202" r="28" fill="#c47b2a"/>
+  <path d="M500 310 C500 210 460 170 520 80" fill="none" stroke="#1e3a28" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="478" cy="180" rx="22" ry="10" fill="#4c8c5c" transform="rotate(-40 478 180)"/>
+  <ellipse cx="530" cy="150" rx="24" ry="11" fill="#2f5d3a" transform="rotate(32 530 150)"/>
+  <ellipse cx="508" cy="120" rx="18" ry="8" fill="#4c8c5c"/>
+</svg>

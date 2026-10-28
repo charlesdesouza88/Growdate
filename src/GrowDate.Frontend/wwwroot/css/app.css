@@ -600,6 +600,205 @@ main {
     margin-bottom: 14px;
 }
 
+.region-chip {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    background: var(--sage);
+    color: var(--moss-deep);
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.region-chip:hover {
+    background: #c5d6bf;
+}
+
+.home-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.8fr);
+    gap: 32px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.hero-art {
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: #e7efe4;
+}
+
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 10px;
+}
+
+.plant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.plant-grid.compact {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+.plant-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: inherit;
+}
+
+.plant-card:hover {
+    border-color: var(--moss);
+}
+
+.plant-card h3 {
+    color: var(--moss);
+    font-size: 1.15rem;
+}
+
+.plant-card a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.crop-thumb {
+    width: 72px;
+    height: 72px;
+    border-radius: 14px;
+    object-fit: cover;
+    background: var(--sage);
+}
+
+.crop-thumb.large {
+    width: 160px;
+    height: 160px;
+    border-radius: 20px;
+}
+
+.chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 16px;
+}
+
+.chip-row.tight {
+    margin: 0;
+    gap: 6px;
+}
+
+.chip, .mini-chip {
+    border: 1px solid var(--line);
+    background: var(--cream);
+    color: var(--moss-deep);
+    border-radius: var(--radius-pill);
+    padding: 6px 12px;
+    font-family: var(--font-ui);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mini-chip {
+    cursor: default;
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+.chip.active {
+    background: var(--moss);
+    color: #fff;
+    border-color: var(--moss);
+}
+
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.region-filter {
+    color: var(--muted);
+    font-size: 0.95rem;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.summary-line {
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+.guide-hero {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+    margin-bottom: 28px;
+}
+
+.guide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.muted {
+    color: var(--muted);
+    margin-top: 8px;
+}
+
+.crop-fold {
+    margin-top: 8px;
+}
+
+.crop-fold summary {
+    cursor: pointer;
+    color: var(--moss);
+    font-weight: 600;
+}
+
+.recommendation-card {
+    text-decoration: none;
+    color: inherit;
+}
+
+.recommendation-card .crop-header {
+    align-items: center;
+}
+
+.care-blurb {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.garden-card .action-buttons {
+    margin-top: 8px;
+}
+
+.detail-value {
+    white-space: normal;
+}
+
 @media (max-width: 900px) {
     .page {
         flex-direction: column;
@@ -637,5 +836,14 @@ main {
     .calendar-day {
         min-height: 52px;
         padding: 6px 2px;
+    }
+
+    .home-hero,
+    .guide-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .display {
+        font-size: 2rem;
     }
 }

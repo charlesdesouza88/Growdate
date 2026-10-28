@@ -22,5 +22,6 @@ builder.Services.AddScoped(sp =>
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 builder.Services.AddScoped<ApiService>();
 builder.Services.AddScoped<RegionStateService>();
+builder.Services.AddScoped<GardenStateService>();
 
 await builder.Build().RunAsync();

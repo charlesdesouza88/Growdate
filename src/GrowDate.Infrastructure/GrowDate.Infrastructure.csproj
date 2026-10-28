@@ -19,4 +19,8 @@
     <ProjectReference Include="..\GrowDate.Core\GrowDate.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Data\catalog.json" />
+  </ItemGroup>
+
 </Project>

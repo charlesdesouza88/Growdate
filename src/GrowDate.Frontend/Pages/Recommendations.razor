@@ -1,14 +1,12 @@
 @page "/recommendations"
-@using GrowDate.Frontend.Services
-@using GrowDate.Core.DTOs
 @inject ApiService ApiService
 @inject RegionStateService RegionState
 
-<PageTitle>Crop Recommendations</PageTitle>
+<PageTitle>In season</PageTitle>
 
 <div class="recommendations-container">
     <p class="kicker">What to plant</p>
-    <h1 class="page-title">Crop recommendations</h1>
+    <h1 class="page-title">In season</h1>
 
     @if (selectedRegion == null)
     {
@@ -38,7 +36,9 @@
         }
         else if (!recommendations.Any())
         {
-            <p>No recommendations available for this date and region.</p>
+            <div class="alert">
+                <p>No recommendations available for this date and region.</p>
+            </div>
         }
         else
         {
@@ -47,47 +47,51 @@
                 <p>Found @recommendations.Count crops suitable for your region</p>
             </div>
 
+            <div class="chip-row">
+                <button type="button" class="chip @(statusFilter == null ? "active" : "")" @onclick="() => statusFilter = null">All</button>
+                @foreach (var status in Statuses)
+                {
+                    <button type="button" class="chip @(statusFilter == status ? "active" : "")"
+                            @onclick="() => statusFilter = status">@status</button>
+                }
+            </div>
+
             <div class="recommendation-list">
-                @foreach (var rec in recommendations.OrderByDescending(r => r.IsIdealTime))
+                @foreach (var rec in Visible)
                 {
                     <div class="recommendation-card @StatusClass(rec.Status)">
                         <div class="crop-header">
-                            <span class="crop-name">@rec.Crop.Name</span>
+                            <CropThumb Crop="rec.Crop" Size="56" />
+                            <a class="crop-name" href="@($"plants/{rec.Crop.Id}")">@rec.Crop.Name</a>
                             <span class="status-badge @StatusClass(rec.Status)">@rec.Status</span>
                         </div>
 
                         <div class="crop-category">
-                            <span>Category: @rec.Crop.Category</span>
+                            <span>@rec.Crop.Category · @rec.Crop.SunRequirement · @rec.Crop.WaterRequirement water</span>
                         </div>
 
-                        <div class="crop-details">
-                            <div class="detail-item">
-                                <span class="detail-label">Planting Window</span>
-                                <span class="detail-value">
-                                    @rec.PlantingWindowStart.ToString("MMM dd") - @rec.PlantingWindowEnd.ToString("MMM dd")
-                                </span>
+                        <details class="crop-fold">
+                            <summary>Dates and notes</summary>
+                            <div class="crop-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Planting window</span>
+                                    <span class="detail-value">
+                                        @rec.PlantingWindowStart.ToString("MMM dd") - @rec.PlantingWindowEnd.ToString("MMM dd")
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Germination</span>
+                                    <span class="detail-value">@rec.EstimatedGerminationDate.ToString("MMM dd, yyyy")</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">@rec.Crop.HarvestOrBloomLabel</span>
+                                    <span class="detail-value">@rec.EstimatedHarvestDate.ToString("MMM dd, yyyy")</span>
+                                </div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Germination Date</span>
-                                <span class="detail-value">@rec.EstimatedGerminationDate.ToString("MMM dd, yyyy")</span>
+                            <div class="notes">
+                                <p>@rec.Notes</p>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Harvest Date</span>
-                                <span class="detail-value">@rec.EstimatedHarvestDate.ToString("MMM dd, yyyy")</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Days to Germination</span>
-                                <span class="detail-value">@rec.Crop.DaysToGermination days</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Days to Harvest</span>
-                                <span class="detail-value">@rec.Crop.DaysToHarvest days</span>
-                            </div>
-                        </div>
-
-                        <div class="notes">
-                            <p>@rec.Notes</p>
-                        </div>
+                        </details>
                     </div>
                 }
             </div>
@@ -96,10 +100,19 @@
 </div>
 
 @code {
+    private static readonly string[] Statuses = { "Ideal", "Coming Soon", "Late Season", "Out of Season" };
+
     private RegionDto? selectedRegion;
     private DateTime selectedDate = DateTime.Now;
     private List<RecommendationDto> recommendations = new();
-    private bool loading = false;
+    private string? statusFilter;
+    private bool loading;
+
+    private IEnumerable<RecommendationDto> Visible =>
+        recommendations
+            .Where(r => statusFilter == null || r.Status == statusFilter)
+            .OrderByDescending(r => r.IsIdealTime)
+            .ThenBy(r => r.Crop.Name);
 
     protected override async Task OnInitializedAsync()
     {

@@ -1,0 +1,93 @@
+@page "/plants"
+@inject ApiService ApiService
+@inject RegionStateService RegionState
+
+<PageTitle>Plants</PageTitle>
+
+<div class="plants-page">
+    <p class="kicker">The catalog</p>
+    <h1 class="page-title">Plants</h1>
+    <p class="page-intro">Vegetables, fruit, herbs, and flowers — with a guide for each.</p>
+
+    @if (loading)
+    {
+        <div class="loading compact">
+            <div class="spinner"></div>
+            <p>Loading plants...</p>
+        </div>
+    }
+    else
+    {
+        <div class="filter-row">
+            <div class="chip-row" role="tablist" aria-label="Category">
+                @foreach (var category in Categories)
+                {
+                    <button type="button" class="chip @(activeCategory == category ? "active" : "")"
+                            @onclick="() => activeCategory = category">@category</button>
+                }
+            </div>
+            @if (selectedRegion != null)
+            {
+                <label class="region-filter">
+                    <input type="checkbox" @bind="onlyInRegion" />
+                    Suitable for @selectedRegion.Name
+                </label>
+            }
+        </div>
+
+        <p class="summary-line">@Visible.Count plants</p>
+
+        <div class="plant-grid">
+            @foreach (var crop in Visible)
+            {
+                <a class="plant-card" href="@($"plants/{crop.Id}")">
+                    <CropThumb Crop="crop" Size="88" />
+                    <h3>@crop.Name</h3>
+                    <p class="crop-category">@crop.Category</p>
+                    <div class="chip-row tight">
+                        <span class="mini-chip">@crop.SunRequirement</span>
+                        <span class="mini-chip">@crop.WaterRequirement water</span>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private static readonly string[] Categories = { "All", "Vegetable", "Fruit", "Herb", "Flower" };
+
+    private List<CropDto> crops = new();
+    private RegionDto? selectedRegion;
+    private string activeCategory = "All";
+    private bool onlyInRegion;
+    private bool loading = true;
+
+    private IReadOnlyList<CropDto> Visible
+    {
+        get
+        {
+            IEnumerable<CropDto> query = crops;
+            if (activeCategory != "All")
+                query = query.Where(c => c.Category == activeCategory);
+            if (onlyInRegion && selectedRegion != null)
+                query = query.Where(c => c.SuitableZones.Contains(selectedRegion.ClimateZone, StringComparer.OrdinalIgnoreCase));
+            return query.OrderBy(c => c.Name).ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RegionState.EnsureLoadedAsync();
+        selectedRegion = RegionState.GetRegion();
+        try
+        {
+            crops = await ApiService.GetCropsAsync();
+        }
+        catch (Exception)
+        {
+            crops = new();
+        }
+        loading = false;
+    }
+}
