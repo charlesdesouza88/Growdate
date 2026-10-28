@@ -65,14 +65,14 @@ GrowDate/
 ## Database
 
 - **Type**: SQLite
-- **Location**: `src/GrowDate.Api/growdate.db`
+- **Location**: `src/GrowDate.Api/growdate.v2.db`
 - **Auto-created**: Yes, on first run
 - **Seeded**: Yes, automatically with sample data
 
 ### Reset Database
 ```bash
 # Delete database file
-rm src/GrowDate.Api/growdate.db
+rm src/GrowDate.Api/growdate.v2.db
 
 # Restart API - database will be recreated
 cd src/GrowDate.Api
@@ -81,7 +81,7 @@ dotnet run
 
 ### View Database
 ```bash
-sqlite3 src/GrowDate.Api/growdate.db
+sqlite3 src/GrowDate.Api/growdate.v2.db
 .schema
 SELECT * FROM Regions;
 SELECT * FROM Crops;
@@ -131,13 +131,13 @@ dotnet test /p:CollectCoverage=true
 ### Add New Crop
 1. Edit `src/GrowDate.Infrastructure/Data/DatabaseSeeder.cs`
 2. Add crop to the crops list
-3. Delete `growdate.db`
+3. Delete `growdate.v2.db`
 4. Restart API
 
 ### Add New Region
 1. Edit `src/GrowDate.Infrastructure/Data/DatabaseSeeder.cs`
 2. Add region to the regions list
-3. Delete `growdate.db`
+3. Delete `growdate.v2.db`
 4. Restart API
 
 ### Create New Page
@@ -158,7 +158,7 @@ dotnet test /p:CollectCoverage=true
 - Check CORS configuration in `Program.cs`
 
 ### Database errors
-- Delete `growdate.db` and restart
+- Delete `growdate.v2.db` and restart
 - Check EF Core packages are installed
 - Verify connection string in `appsettings.json`
 

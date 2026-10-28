@@ -8,6 +8,8 @@ public static class DtoMappers
     {
         Id = crop.Id,
         Name = crop.Name,
+        Slug = crop.Slug,
+        Description = crop.Description,
         Category = crop.Category,
         PlantingStartMonth = crop.PlantingStartMonth,
         PlantingStartDay = crop.PlantingStartDay,
@@ -15,7 +17,24 @@ public static class DtoMappers
         PlantingEndDay = crop.PlantingEndDay,
         DaysToGermination = crop.DaysToGermination,
         DaysToHarvest = crop.DaysToHarvest,
-        SuitableZones = new List<string>(crop.SuitableZones)
+        SuitableZones = new List<string>(crop.SuitableZones),
+        MinTemperature = crop.MinTemperature,
+        MaxTemperature = crop.MaxTemperature,
+        SoilType = crop.SoilType,
+        SunRequirement = crop.SunRequirement,
+        WaterRequirement = crop.WaterRequirement,
+        PlantingTips = crop.PlantingTips,
+        ImageUrl = string.IsNullOrWhiteSpace(crop.ImageUrl)
+            ? "/images/crops/placeholder.svg"
+            : crop.ImageUrl,
+        Spacing = crop.Spacing,
+        Companions = crop.Companions,
+        Pests = crop.Pests,
+        Feeding = crop.Feeding,
+        HarvestOrBloomLabel = string.IsNullOrWhiteSpace(crop.HarvestOrBloomLabel)
+            ? "Harvest"
+            : crop.HarvestOrBloomLabel,
+        CareSteps = new List<string>(crop.CareSteps)
     };
 
     public static RegionDto ToDto(this Region region) => new RegionDto

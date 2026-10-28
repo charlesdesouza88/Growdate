@@ -1,19 +1,112 @@
+using System.Reflection;
+using System.Text.Json;
 using GrowDate.Core.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace GrowDate.Infrastructure.Data;
 
 public static class DatabaseSeeder
 {
+    public const int CurrentSeedVersion = 2;
+    private const string CatalogResource = "GrowDate.Infrastructure.Data.catalog.json";
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    public static CatalogDocument LoadCatalog()
+    {
+        var assembly = typeof(DatabaseSeeder).Assembly;
+        using var stream = assembly.GetManifestResourceStream(CatalogResource)
+            ?? throw new InvalidOperationException($"Embedded catalog not found: {CatalogResource}. Resources: {string.Join(", ", assembly.GetManifestResourceNames())}");
+        using var reader = new StreamReader(stream);
+        var json = reader.ReadToEnd();
+        return JsonSerializer.Deserialize<CatalogDocument>(json, JsonOptions)
+            ?? throw new InvalidOperationException("Catalog JSON was empty.");
+    }
+
     public static async Task SeedAsync(GrowDateDbContext context)
     {
-        // Check if already seeded
-        if (context.Regions.Any() || context.Crops.Any())
-            return;
+        if (!context.Regions.Any())
+            await SeedRegionsAsync(context);
 
-        // Seed Regions
+        var catalog = LoadCatalog();
+        var existing = await context.Crops.ToListAsync();
+        var byName = existing.ToDictionary(c => c.Name, StringComparer.OrdinalIgnoreCase);
+        var now = DateTime.UtcNow;
+
+        foreach (var entry in catalog.Crops)
+        {
+            if (byName.TryGetValue(entry.Name, out var crop))
+            {
+                Apply(crop, entry, now, created: crop.CreatedAt);
+            }
+            else
+            {
+                var created = ToCrop(entry, now);
+                context.Crops.Add(created);
+                byName[entry.Name] = created;
+            }
+        }
+
+        var meta = context.SeedMeta.FirstOrDefault();
+        if (meta == null)
+            context.SeedMeta.Add(new SeedMeta { Version = CurrentSeedVersion });
+        else
+            meta.Version = CurrentSeedVersion;
+
+        await context.SaveChangesAsync();
+    }
+
+    public static Crop ToCrop(CatalogCrop entry, DateTime now)
+    {
+        var crop = new Crop { CreatedAt = now };
+        Apply(crop, entry, now, now);
+        return crop;
+    }
+
+    private static void Apply(Crop crop, CatalogCrop entry, DateTime now, DateTime created)
+    {
+        crop.Name = entry.Name;
+        crop.Slug = string.IsNullOrWhiteSpace(entry.Slug) ? Slugify(entry.Name) : entry.Slug;
+        crop.Category = entry.Category;
+        crop.Description = entry.Description;
+        crop.PlantingStartMonth = entry.PlantingStartMonth;
+        crop.PlantingStartDay = entry.PlantingStartDay;
+        crop.PlantingEndMonth = entry.PlantingEndMonth;
+        crop.PlantingEndDay = entry.PlantingEndDay;
+        crop.DaysToGermination = entry.DaysToGermination;
+        crop.DaysToHarvest = entry.DaysToHarvest;
+        crop.SuitableZones = entry.SuitableZones;
+        crop.MinTemperature = entry.MinTemperature;
+        crop.MaxTemperature = entry.MaxTemperature;
+        crop.SoilType = entry.SoilType;
+        crop.SunRequirement = entry.SunRequirement;
+        crop.WaterRequirement = entry.WaterRequirement;
+        crop.PlantingTips = entry.PlantingTips;
+        crop.Spacing = entry.Spacing;
+        crop.Companions = entry.Companions;
+        crop.Pests = entry.Pests;
+        crop.Feeding = entry.Feeding;
+        crop.CareSteps = entry.CareSteps;
+        crop.HarvestOrBloomLabel = string.IsNullOrWhiteSpace(entry.HarvestOrBloomLabel) ? "Harvest" : entry.HarvestOrBloomLabel;
+        crop.ImageUrl = string.IsNullOrWhiteSpace(entry.ImageUrl)
+            ? $"/images/crops/{crop.Slug}.svg"
+            : entry.ImageUrl;
+        crop.CreatedAt = created;
+        crop.UpdatedAt = now;
+    }
+
+    private static string Slugify(string name) =>
+        name.Trim().ToLowerInvariant().Replace(' ', '-');
+
+    private static async Task SeedRegionsAsync(GrowDateDbContext context)
+    {
+        var now = DateTime.UtcNow;
         var regions = new List<Region>
         {
-            new Region
+            new()
             {
                 Name = "California Central Valley",
                 Code = "US_CA_CENTRAL",
@@ -26,10 +119,10 @@ public static class DatabaseSeeder
                 AverageMinTemp = 5,
                 AverageMaxTemp = 35,
                 FrostFreeDays = 300,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             },
-            new Region
+            new()
             {
                 Name = "Florida",
                 Code = "US_FL",
@@ -42,10 +135,10 @@ public static class DatabaseSeeder
                 AverageMinTemp = 15,
                 AverageMaxTemp = 33,
                 FrostFreeDays = 365,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             },
-            new Region
+            new()
             {
                 Name = "Texas Hill Country",
                 Code = "US_TX_HILL",
@@ -58,10 +151,10 @@ public static class DatabaseSeeder
                 AverageMinTemp = 0,
                 AverageMaxTemp = 36,
                 FrostFreeDays = 250,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             },
-            new Region
+            new()
             {
                 Name = "São Paulo State",
                 Code = "BR_SP",
@@ -74,10 +167,10 @@ public static class DatabaseSeeder
                 AverageMinTemp = 12,
                 AverageMaxTemp = 28,
                 FrostFreeDays = 365,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             },
-            new Region
+            new()
             {
                 Name = "Minas Gerais",
                 Code = "BR_MG",
@@ -90,10 +183,10 @@ public static class DatabaseSeeder
                 AverageMinTemp = 10,
                 AverageMaxTemp = 26,
                 FrostFreeDays = 330,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             },
-            new Region
+            new()
             {
                 Name = "Pacific Northwest",
                 Code = "US_PNW",
@@ -106,88 +199,12 @@ public static class DatabaseSeeder
                 AverageMinTemp = 2,
                 AverageMaxTemp = 26,
                 FrostFreeDays = 220,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             }
         };
 
         context.Regions.AddRange(regions);
         await context.SaveChangesAsync();
-
-        // Seed Crops with default values
-        var now = DateTime.UtcNow;
-        var crops = new List<Crop>
-        {
-            CreateCrop("Tomatoes", "Vegetable", 3, 15, 6, 30, 7, 70, 
-                new[] { "Zone 8", "Zone 9", "Zone 10", "Tropical", "Subtropical" }, now),
-            CreateCrop("Lettuce", "Vegetable", 2, 1, 5, 31, 5, 45,
-                new[] { "Zone 8", "Zone 9", "Zone 10", "Subtropical" }, now),
-            CreateCrop("Carrots", "Vegetable", 3, 1, 8, 31, 10, 70,
-                new[] { "Zone 8", "Zone 9", "Subtropical" }, now),
-            CreateCrop("Peppers", "Vegetable", 4, 1, 6, 30, 10, 80,
-                new[] { "Zone 9", "Zone 10", "Tropical" }, now),
-            CreateCrop("Strawberries", "Fruit", 3, 15, 5, 31, 14, 120,
-                new[] { "Zone 8", "Zone 9", "Subtropical" }, now),
-            CreateCrop("Basil", "Herb", 4, 15, 7, 31, 7, 60,
-                new[] { "Zone 8", "Zone 9", "Zone 10", "Tropical", "Subtropical" }, now),
-            CreateCrop("Cucumbers", "Vegetable", 4, 1, 7, 15, 7, 55,
-                new[] { "Zone 8", "Zone 9", "Zone 10", "Tropical" }, now),
-            CreateCrop("Beans", "Vegetable", 4, 15, 7, 31, 7, 50,
-                new[] { "Zone 8", "Zone 9", "Zone 10", "Tropical", "Subtropical" }, now),
-            CreateCrop("Spinach", "Vegetable", 2, 15, 4, 30, 7, 45,
-                new[] { "Zone 8", "Zone 9", "Subtropical" }, now),
-            CreateCrop("Zucchini", "Vegetable", 4, 15, 7, 31, 7, 50,
-                new[] { "Zone 8", "Zone 9", "Zone 10", "Tropical" }, now),
-            CreateCrop("Corn", "Vegetable", 4, 15, 6, 30, 10, 85,
-                new[] { "Zone 8", "Zone 9", "Zone 10", "Tropical", "Subtropical" }, now),
-            CreateCrop("Radishes", "Vegetable", 3, 1, 9, 30, 5, 25,
-                new[] { "Zone 8", "Zone 9", "Subtropical" }, now),
-            CreateCrop("Broccoli", "Vegetable", 2, 1, 4, 30, 7, 70,
-                new[] { "Zone 8", "Zone 9", "Subtropical" }, now),
-            CreateCrop("Watermelon", "Fruit", 5, 1, 6, 30, 10, 90,
-                new[] { "Zone 9", "Zone 10", "Tropical" }, now),
-            CreateCrop("Cilantro", "Herb", 3, 15, 5, 31, 7, 45,
-                new[] { "Zone 8", "Zone 9", "Zone 10", "Subtropical" }, now),
-            CreateCrop("Pumpkin", "Vegetable", 5, 15, 7, 15, 7, 100,
-                new[] { "Zone 8", "Zone 9", "Zone 10", "Subtropical" }, now),
-            CreateCrop("Kale", "Vegetable", 2, 15, 5, 31, 7, 60,
-                new[] { "Zone 8", "Zone 9", "Subtropical" }, now),
-            CreateCrop("Parsley", "Herb", 3, 1, 6, 30, 14, 70,
-                new[] { "Zone 8", "Zone 9", "Zone 10", "Subtropical" }, now),
-            CreateCrop("Eggplant", "Vegetable", 4, 15, 6, 30, 10, 85,
-                new[] { "Zone 9", "Zone 10", "Tropical" }, now),
-            CreateCrop("Green Onions", "Vegetable", 3, 1, 9, 30, 7, 60,
-                new[] { "Zone 8", "Zone 9", "Zone 10", "Subtropical" }, now)
-        };
-
-        context.Crops.AddRange(crops);
-        await context.SaveChangesAsync();
-    }
-
-    private static Crop CreateCrop(string name, string category, int startMonth, int startDay,
-        int endMonth, int endDay, int germDays, int harvestDays, string[] zones, DateTime now)
-    {
-        return new Crop
-        {
-            Name = name,
-            Category = category,
-            Description = $"{name} - {category}",
-            PlantingStartMonth = startMonth,
-            PlantingStartDay = startDay,
-            PlantingEndMonth = endMonth,
-            PlantingEndDay = endDay,
-            DaysToGermination = germDays,
-            DaysToHarvest = harvestDays,
-            SuitableZones = zones.ToList(),
-            MinTemperature = 10,
-            MaxTemperature = 35,
-            SoilType = "Well-drained",
-            SunRequirement = "Full Sun",
-            WaterRequirement = "Medium",
-            PlantingTips = $"Plant {name.ToLower()} when soil is warm",
-            ImageUrl = "",
-            CreatedAt = now,
-            UpdatedAt = now
-        };
     }
 }

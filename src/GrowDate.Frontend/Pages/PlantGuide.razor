@@ -1,0 +1,156 @@
+@page "/plants/{Id:int}"
+@inject ApiService ApiService
+@inject RegionStateService RegionState
+@inject GardenStateService GardenState
+
+<PageTitle>@(crop?.Name ?? "Plant guide")</PageTitle>
+
+<div class="guide-page">
+    @if (loading)
+    {
+        <div class="loading compact">
+            <div class="spinner"></div>
+            <p>Loading guide...</p>
+        </div>
+    }
+    else if (crop == null)
+    {
+        <div class="alert">
+            <p>That plant is not in the catalog. <a href="plants">Browse plants</a>.</p>
+        </div>
+    }
+    else
+    {
+        <p class="kicker">@crop.Category</p>
+        <div class="guide-hero">
+            <CropThumb Crop="crop" CssClass="crop-thumb large" Size="160" />
+            <div>
+                <h1 class="page-title">@crop.Name</h1>
+                <p class="page-intro">@crop.Description</p>
+                <div class="chip-row">
+                    <span class="mini-chip">@crop.SunRequirement</span>
+                    <span class="mini-chip">@crop.WaterRequirement water</span>
+                    <span class="mini-chip">@crop.SoilType</span>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn" @onclick="ToggleGarden">
+                        @(inGarden ? "Remove from garden" : "Add to garden")
+                    </button>
+                    <a class="btn btn-ghost" href="plants">All plants</a>
+                </div>
+            </div>
+        </div>
+
+        @if (recommendation != null)
+        {
+            <div class="info-section">
+                <h2>In @recommendation.Region.Name</h2>
+                <p>
+                    <span class="status-badge @StatusClass(recommendation.Status)">@recommendation.Status</span>
+                    Window @recommendation.PlantingWindowStart.ToString("MMM dd") – @recommendation.PlantingWindowEnd.ToString("MMM dd").
+                    @crop.HarvestOrBloomLabel about @crop.DaysToHarvest days after planting.
+                </p>
+                <p class="muted">@recommendation.Notes</p>
+            </div>
+        }
+        else if (selectedRegion == null)
+        {
+            <div class="alert">
+                <p><a href="select-region">Select a region</a> to see this plant’s window where you grow.</p>
+            </div>
+        }
+
+        <div class="guide-grid">
+            <section class="info-section">
+                <h2>Sow</h2>
+                <p>@crop.PlantingTips</p>
+                <p><strong>Spacing:</strong> @crop.Spacing</p>
+                <p><strong>Soil:</strong> @crop.SoilType</p>
+                <p><strong>Temperature:</strong> @crop.MinTemperature.ToString("0")–@crop.MaxTemperature.ToString("0") °C</p>
+            </section>
+            <section class="info-section">
+                <h2>Water and feed</h2>
+                <p><strong>Water:</strong> @crop.WaterRequirement</p>
+                <p><strong>Sun:</strong> @crop.SunRequirement</p>
+                <p>@crop.Feeding</p>
+            </section>
+            <section class="info-section">
+                <h2>Companions</h2>
+                <p>@crop.Companions</p>
+            </section>
+            <section class="info-section">
+                <h2>Pests and trouble</h2>
+                <p>@crop.Pests</p>
+            </section>
+        </div>
+
+        <section class="info-section">
+            <h2>Care</h2>
+            <ol>
+                @foreach (var step in crop.CareSteps)
+                {
+                    <li>@step</li>
+                }
+            </ol>
+        </section>
+
+        <section class="info-section">
+            <h2>@crop.HarvestOrBloomLabel</h2>
+            <p>About @crop.DaysToHarvest days from planting. Germination usually takes @crop.DaysToGermination days.</p>
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private CropDto? crop;
+    private RegionDto? selectedRegion;
+    private RecommendationDto? recommendation;
+    private bool loading = true;
+    private bool inGarden;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        loading = true;
+        crop = null;
+        recommendation = null;
+
+        await RegionState.EnsureLoadedAsync();
+        await GardenState.EnsureLoadedAsync();
+        selectedRegion = RegionState.GetRegion();
+        inGarden = GardenState.Contains(Id);
+
+        try
+        {
+            crop = await ApiService.GetCropByIdAsync(Id);
+        }
+        catch (Exception)
+        {
+            crop = null;
+        }
+
+        if (crop != null && selectedRegion != null)
+        {
+            try
+            {
+                recommendation = await ApiService.GetDetailedRecommendationAsync(Id, selectedRegion.Id, DateTime.Today);
+            }
+            catch (Exception)
+            {
+                recommendation = null;
+            }
+        }
+
+        loading = false;
+    }
+
+    private void ToggleGarden()
+    {
+        GardenState.Toggle(Id);
+        inGarden = GardenState.Contains(Id);
+    }
+
+    private static string StatusClass(string status) =>
+        status.ToLowerInvariant().Replace(" ", "-");
+}

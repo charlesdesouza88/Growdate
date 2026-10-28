@@ -1,10 +1,14 @@
 @inherits LayoutComponentBase
-@using GrowDate.Frontend.Services
+@implements IDisposable
 @inject RegionStateService RegionState
 
 <div class="page">
     <aside class="sidebar">
         <a class="brand" href="">GrowDate</a>
+        @if (region != null)
+        {
+            <a class="region-chip" href="select-region">@region.Name</a>
+        }
         <NavMenu />
     </aside>
 
@@ -16,8 +20,23 @@
 </div>
 
 @code {
+    private RegionDto? region;
+
     protected override async Task OnInitializedAsync()
     {
+        RegionState.Changed += OnRegionChanged;
         await RegionState.EnsureLoadedAsync();
+        region = RegionState.GetRegion();
+    }
+
+    private void OnRegionChanged()
+    {
+        region = RegionState.GetRegion();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        RegionState.Changed -= OnRegionChanged;
     }
 }

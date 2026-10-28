@@ -45,15 +45,28 @@
             }
         </div>
 
-        @if (selectedDate.HasValue && recommendations.Any())
+        @if (!selectedDate.HasValue)
+        {
+            <div class="alert">
+                <p>Pick a dotted day to see what can go in the ground.</p>
+            </div>
+        }
+        else if (!recommendations.Any())
+        {
+            <div class="alert">
+                <p>Nothing listed for @selectedDate.Value.ToString("MMMM dd, yyyy"). Try a day with a green dot.</p>
+            </div>
+        }
+        else
         {
             <div class="selected-date-info">
                 <h3>Crops for @selectedDate.Value.ToString("MMMM dd, yyyy")</h3>
                 <div class="recommendation-list">
                     @foreach (var rec in recommendations.OrderByDescending(r => r.IsIdealTime))
                     {
-                        <div class="recommendation-card @StatusClass(rec.Status)">
+                        <a class="recommendation-card @StatusClass(rec.Status)" href="@($"plants/{rec.Crop.Id}")">
                             <div class="crop-header">
+                                <CropThumb Crop="rec.Crop" Size="56" />
                                 <span class="crop-name">@rec.Crop.Name</span>
                                 <span class="status-badge @StatusClass(rec.Status)">@rec.Status</span>
                             </div>
@@ -64,11 +77,11 @@
                                     <span class="detail-value">@rec.EstimatedGerminationDate.ToString("MMM dd")</span>
                                 </div>
                                 <div class="detail-item">
-                                    <span class="detail-label">Harvest</span>
+                                    <span class="detail-label">@rec.Crop.HarvestOrBloomLabel</span>
                                     <span class="detail-value">@rec.EstimatedHarvestDate.ToString("MMM dd")</span>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     }
                 </div>
             </div>

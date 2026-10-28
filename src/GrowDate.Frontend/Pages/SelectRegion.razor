@@ -41,9 +41,8 @@
                 <div class="region-card @(selectedRegion?.Id == region.Id ? "selected" : "")"
                      @onclick="() => OnSelectRegion(region)">
                     <h3>@region.Name</h3>
-                    <p><strong>Country:</strong> @region.Country</p>
-                    <p><strong>Climate Zone:</strong> @region.ClimateZone</p>
-                    <p><strong>Coordinates:</strong> @region.Latitude.ToString("F2"), @region.Longitude.ToString("F2")</p>
+                    <p>@region.Country</p>
+                    <p class="mini-chip">@region.ClimateZone</p>
                     @if (selectedRegion?.Id == region.Id)
                     {
                         <div class="selected-indicator">Selected</div>
@@ -56,7 +55,7 @@
         {
             <div class="action-buttons">
                 <button class="btn" @onclick="ViewCalendar">View calendar</button>
-                <button class="btn btn-ghost" @onclick="ViewRecommendations">View crops</button>
+                <button class="btn btn-ghost" @onclick="ViewPlants">View plants</button>
             </div>
         }
     }
@@ -119,7 +118,7 @@
 
     private void ViewCalendar() => Navigation.NavigateTo("/calendar");
 
-    private void ViewRecommendations() => Navigation.NavigateTo("/recommendations");
+    private void ViewPlants() => Navigation.NavigateTo("/plants");
 
     public async ValueTask DisposeAsync()
     {

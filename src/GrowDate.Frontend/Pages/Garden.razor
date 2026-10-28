@@ -1,0 +1,110 @@
+@page "/garden"
+@inject ApiService ApiService
+@inject RegionStateService RegionState
+@inject GardenStateService GardenState
+
+<PageTitle>Garden</PageTitle>
+
+<div class="garden-page">
+    <p class="kicker">What you are growing</p>
+    <h1 class="page-title">Garden</h1>
+    <p class="page-intro">A desk for the plants you have chosen. Care stays with you in this browser.</p>
+
+    @if (loading)
+    {
+        <div class="loading compact">
+            <div class="spinner"></div>
+            <p>Loading garden...</p>
+        </div>
+    }
+    else if (!plants.Any())
+    {
+        <div class="alert">
+            <p>Nothing in the garden yet. <a href="plants">Browse plants</a> and tap Add to garden.</p>
+        </div>
+    }
+    else
+    {
+        @if (selectedRegion != null)
+        {
+            <p class="region-meta">Windows shown for <strong>@selectedRegion.Name</strong></p>
+        }
+
+        <div class="plant-grid">
+            @foreach (var item in plants)
+            {
+                <article class="plant-card garden-card">
+                    <a href="@($"plants/{item.Crop.Id}")">
+                        <CropThumb Crop="item.Crop" Size="88" />
+                        <h3>@item.Crop.Name</h3>
+                    </a>
+                    <p class="crop-category">@item.Crop.Category</p>
+                    @if (item.Recommendation != null)
+                    {
+                        <span class="status-badge @StatusClass(item.Recommendation.Status)">@item.Recommendation.Status</span>
+                    }
+                    <p class="care-blurb">@item.Crop.SunRequirement · @item.Crop.WaterRequirement water</p>
+                    <p class="care-blurb">@item.Crop.Feeding</p>
+                    <div class="action-buttons">
+                        <a class="btn btn-ghost" href="@($"plants/{item.Crop.Id}")">Guide</a>
+                        <button type="button" class="btn btn-ghost" @onclick="() => Remove(item.Crop.Id)">Remove</button>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private readonly List<GardenPlant> plants = new();
+    private RegionDto? selectedRegion;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RegionState.EnsureLoadedAsync();
+        await GardenState.EnsureLoadedAsync();
+        selectedRegion = RegionState.GetRegion();
+
+        List<CropDto> catalog;
+        try
+        {
+            catalog = await ApiService.GetCropsAsync();
+        }
+        catch (Exception)
+        {
+            catalog = new();
+        }
+
+        foreach (var crop in catalog.Where(c => GardenState.Contains(c.Id)).OrderBy(c => c.Name))
+        {
+            RecommendationDto? rec = null;
+            if (selectedRegion != null)
+            {
+                try
+                {
+                    rec = await ApiService.GetDetailedRecommendationAsync(crop.Id, selectedRegion.Id, DateTime.Today);
+                }
+                catch (Exception)
+                {
+                    rec = null;
+                }
+            }
+
+            plants.Add(new GardenPlant(crop, rec));
+        }
+
+        loading = false;
+    }
+
+    private void Remove(int cropId)
+    {
+        GardenState.Remove(cropId);
+        plants.RemoveAll(p => p.Crop.Id == cropId);
+    }
+
+    private static string StatusClass(string status) =>
+        status.ToLowerInvariant().Replace(" ", "-");
+
+    private sealed record GardenPlant(CropDto Crop, RecommendationDto? Recommendation);
+}

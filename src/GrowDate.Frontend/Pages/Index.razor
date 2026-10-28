@@ -1,35 +1,102 @@
 @page "/"
+@inject RegionStateService RegionState
+@inject ApiService ApiService
 
 <PageTitle>GrowDate</PageTitle>
 
 <div class="home-container">
-    <p class="kicker">The planter’s companion</p>
-    <h1 class="display">Plant in season, wherever you grow.</h1>
-    <p class="lede">Pick a region, open the calendar, and see which crops want the soil now.</p>
-    <a href="select-region" class="btn">Choose your region</a>
+    <div class="home-hero">
+        <div>
+            <p class="kicker">The planter’s companion</p>
+            <h1 class="display">Plant in season, then keep them well.</h1>
+            <p class="lede">Pick a region, open the calendar, and read a guide for every vegetable, fruit, herb, and flower in the catalog.</p>
+            <div class="action-buttons">
+                <a href="select-region" class="btn">Choose your region</a>
+                @if (region != null)
+                {
+                    <a href="calendar" class="btn btn-ghost">Open calendar</a>
+                    <a href="plants" class="btn btn-ghost">Browse plants</a>
+                }
+                else
+                {
+                    <a href="plants" class="btn btn-ghost">Browse plants</a>
+                }
+            </div>
+        </div>
+        <img class="hero-art" src="/images/hero-botanical.svg" alt="Ink drawing of a sunflower, tomato, and herbs" />
+    </div>
 
     <div class="feature-cards">
         <div class="card">
+            <svg class="feature-icon" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#d7e4d0"/><circle cx="14" cy="16" r="3" fill="#2f5d3a"/><circle cx="24" cy="22" r="3" fill="#c47b2a"/></svg>
             <h3>Region</h3>
             <p>Six climates, from California valleys to São Paulo.</p>
         </div>
         <div class="card">
+            <svg class="feature-icon" viewBox="0 0 40 40" aria-hidden="true"><rect x="8" y="10" width="24" height="22" rx="4" fill="#d7e4d0"/><circle cx="16" cy="20" r="2" fill="#2f5d3a"/><circle cx="24" cy="20" r="2" fill="#2f5d3a"/><circle cx="20" cy="26" r="2" fill="#c47b2a"/></svg>
             <h3>Calendar</h3>
             <p>Days marked when something can go in the ground.</p>
         </div>
         <div class="card">
-            <h3>Crops</h3>
-            <p>Ideal, coming soon, late, or wait until next season.</p>
+            <svg class="feature-icon" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 8c6 6 6 12 0 18-6-6-6-12 0-18z" fill="#2f5d3a"/><rect x="18" y="24" width="4" height="10" fill="#1e3a28"/></svg>
+            <h3>Guides</h3>
+            <p>Sun, water, pests, and harvest — or bloom — for fifty plants.</p>
         </div>
     </div>
 
-    <div class="info-section">
-        <h2>How it works</h2>
-        <ol>
-            <li><strong>Select your region</strong> on the map or from the list.</li>
-            <li><strong>Pick a date</strong> in the calendar.</li>
-            <li><strong>Read the window</strong> — ideal, coming soon, late, or out of season.</li>
-            <li><strong>Plant</strong> using the germination and harvest estimates.</li>
-        </ol>
-    </div>
+    @if (featured.Any())
+    {
+        <div class="info-section">
+            <h2>In season in @region!.Name</h2>
+            <div class="plant-grid compact">
+                @foreach (var rec in featured)
+                {
+                    <a class="plant-card" href="@($"plants/{rec.Crop.Id}")">
+                        <CropThumb Crop="rec.Crop" Size="72" />
+                        <h3>@rec.Crop.Name</h3>
+                        <span class="status-badge @StatusClass(rec.Status)">@rec.Status</span>
+                    </a>
+                }
+            </div>
+            <p><a href="recommendations">See today’s full list</a></p>
+        </div>
+    }
+    else
+    {
+        <div class="info-section">
+            <h2>How it works</h2>
+            <ol>
+                <li><strong>Select your region</strong> on the map or from the list.</li>
+                <li><strong>Pick a date</strong> in the calendar.</li>
+                <li><strong>Open a guide</strong> for sowing, water, pests, and harvest.</li>
+                <li><strong>Add plants to your garden</strong> so care stays in one place.</li>
+            </ol>
+        </div>
+    }
 </div>
+
+@code {
+    private RegionDto? region;
+    private List<RecommendationDto> featured = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RegionState.EnsureLoadedAsync();
+        region = RegionState.GetRegion();
+        if (region == null)
+            return;
+
+        try
+        {
+            var recs = await ApiService.GetRecommendationsAsync(region.Id, DateTime.Today);
+            featured = recs.Where(r => r.IsIdealTime).Take(4).ToList();
+        }
+        catch (Exception)
+        {
+            featured = new();
+        }
+    }
+
+    private static string StatusClass(string status) =>
+        status.ToLowerInvariant().Replace(" ", "-");
+}

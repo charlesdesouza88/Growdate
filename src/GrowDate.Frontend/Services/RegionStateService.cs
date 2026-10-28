@@ -18,6 +18,8 @@ public class RegionStateService
 
     public RegionDto? SelectedRegion => _selectedRegion;
 
+    public event Action? Changed;
+
     public async Task EnsureLoadedAsync()
     {
         if (_loaded)
@@ -35,12 +37,14 @@ public class RegionStateService
         }
 
         _loaded = true;
+        Changed?.Invoke();
     }
 
     public void SetRegion(RegionDto? region)
     {
         _selectedRegion = region;
         _ = PersistAsync();
+        Changed?.Invoke();
     }
 
     public RegionDto? GetRegion() => _selectedRegion;
@@ -49,6 +53,7 @@ public class RegionStateService
     {
         _selectedRegion = null;
         _ = PersistAsync();
+        Changed?.Invoke();
     }
 
     private async Task PersistAsync()

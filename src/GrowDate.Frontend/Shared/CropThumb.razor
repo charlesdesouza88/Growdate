@@ -1,0 +1,15 @@
+@using GrowDate.Core.DTOs
+
+<img src="@Src" alt="@Alt" class="@CssClass" width="@Size" height="@Size" />
+
+@code {
+    [Parameter] public CropDto? Crop { get; set; }
+    [Parameter] public string CssClass { get; set; } = "crop-thumb";
+    [Parameter] public int Size { get; set; } = 72;
+
+    private string Src => string.IsNullOrWhiteSpace(Crop?.ImageUrl)
+        ? "/images/crops/placeholder.svg"
+        : Crop.ImageUrl;
+
+    private string Alt => Crop?.Name ?? "Plant";
+}

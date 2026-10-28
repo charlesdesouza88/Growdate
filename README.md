@@ -223,7 +223,7 @@ new Region
 }
 ```
 
-Delete `growdate.db` and restart the API to reseed the database.
+Delete `growdate.v2.db` and restart the API to reseed the database.
 
 ## 🔮 Future Enhancements
 
@@ -251,7 +251,7 @@ Delete `growdate.db` and restart the API to reseed the database.
 View the SQLite database:
 ```bash
 # Install sqlite3 if not already installed
-sqlite3 src/GrowDate.Api/growdate.db
+sqlite3 src/GrowDate.Api/growdate.v2.db
 
 # View tables
 .tables

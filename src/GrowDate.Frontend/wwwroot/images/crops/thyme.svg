@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Thyme">
+  <rect width="100" height="100" rx="18" fill="#f6f1e7"/>
+  <circle cx="50" cy="52" r="38" fill="#d7e4d0" opacity="0.55"/>
+  <path d="M53 82 L53 50" stroke="#2f5d3a" stroke-width="3" stroke-linecap="round"/>
+  
+  <path d="M53 54 C39 36 47 16 51 6" fill="none" stroke="#2f5d3a" stroke-width="2"/>
+  <path d="M53 54 C65 38 61 18 56 8" fill="none" stroke="#4c8c5c" stroke-width="2"/>
+  <ellipse cx="43" cy="32" rx="6" ry="3" fill="#4c8c5c" transform="rotate(-40 43 32)"/>
+  <ellipse cx="63" cy="30" rx="6" ry="3" fill="#2f5d3a" transform="rotate(35 63 30)"/>
+  <ellipse cx="49" cy="18" rx="5" ry="2.5" fill="#4c8c5c"/>
+</svg>
